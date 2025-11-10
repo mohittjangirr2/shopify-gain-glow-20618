@@ -38,6 +38,7 @@ const CODRemittance = () => {
 
     const orders = ordersData.orders;
     const shipments = shipmentsData.shipments;
+    const codRemittanceFromShiprocket = shipmentsData.codRemittance || null;
 
     // Filter COD orders
     const codOrders = orders.filter((o: any) => 
@@ -68,6 +69,17 @@ const CODRemittance = () => {
 
     // Calculate COD remittance fees
     const codRemittanceFees = deliveredCOD.length * settings.codRemittance.fee;
+    
+    // Calculate settled vs not settled from Shiprocket API data
+    let settledAmount = 0;
+    let notSettledAmount = deliveredCODValue;
+    
+    if (codRemittanceFromShiprocket && codRemittanceFromShiprocket.data) {
+      // Parse Shiprocket remittance data to get settled vs pending amounts
+      settledAmount = parseFloat(codRemittanceFromShiprocket.data.total_settled || '0');
+      notSettledAmount = deliveredCODValue - settledAmount;
+    }
+    
     const netCODAmount = deliveredCODValue - codRemittanceFees;
 
     // COD by status
@@ -101,6 +113,8 @@ const CODRemittance = () => {
       pendingCODValue,
       codRemittanceFees,
       netCODAmount,
+      settledAmount,
+      notSettledAmount,
       codByStatus,
       codByStateData,
       deliveredCODDetails: deliveredCOD.map((o: any) => ({
@@ -170,7 +184,7 @@ const CODRemittance = () => {
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3 mb-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <Card>
             <CardHeader>
               <CardTitle>Total COD Value</CardTitle>
@@ -187,14 +201,28 @@ const CODRemittance = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Delivered COD Value</CardTitle>
+              <CardTitle>Settled Amount</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-600">
-                ₹{codMetrics?.deliveredCODValue?.toFixed(2) || 0}
+                ₹{codMetrics?.settledAmount?.toFixed(2) || 0}
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Before remittance fees
+                Amount settled by Shiprocket
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Not Settled</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-orange-600">
+                ₹{codMetrics?.notSettledAmount?.toFixed(2) || 0}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Pending settlement
               </p>
             </CardContent>
           </Card>

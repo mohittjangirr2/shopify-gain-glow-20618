@@ -75,6 +75,24 @@ serve(async (req) => {
 
     console.log('Successfully authenticated with Shiprocket, fetching shipments...');
 
+    // Fetch COD remittance data
+    let codRemittanceData: any = null;
+    try {
+      const remittanceResponse = await fetch('https://apiv2.shiprocket.in/v1/external/courier/serviceability/remittance', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (remittanceResponse.ok) {
+        codRemittanceData = await remittanceResponse.json();
+        console.log('COD remittance data fetched successfully');
+      }
+    } catch (e) {
+      console.error('Error fetching COD remittance:', e);
+    }
+
     // Fetch ALL shipments with pagination
     let allShipments: any[] = [];
     let currentPage = 1;
@@ -251,18 +269,37 @@ serve(async (req) => {
       };
     });
 
-    // Calculate RTO metrics
+    // Calculate RTO metrics - fixed formula: RTO Rate (%) = (Total RTO Orders / Total Delivered Orders) × 100
     const totalShipments = formattedShipments.length;
+    
+    // RTO initiated and delivered (not pending RTO)
     const rtoShipments = formattedShipments.filter((s: any) => 
       s.status?.toLowerCase().includes('rto') || s.rtoStatus?.toLowerCase().includes('rto')
     );
     const rtoCount = rtoShipments.length;
-    const rtoPercentage = totalShipments > 0 ? (rtoCount / totalShipments) * 100 : 0;
-
+    
+    // Delivered shipments (excluding RTO)
     const deliveredShipments = formattedShipments.filter((s: any) => 
       s.status?.toLowerCase() === 'delivered'
     );
-    const deliveredPercentage = totalShipments > 0 ? (deliveredShipments.length / totalShipments) * 100 : 0;
+    const deliveredCount = deliveredShipments.length;
+    
+    // Correct RTO calculation: RTO / Delivered * 100 (consider NDR as part of potential RTO)
+    const ndrShipments = formattedShipments.filter((s: any) => 
+      s.status?.toLowerCase().includes('ndr') || s.status?.toLowerCase().includes('action')
+    );
+    const ndrCount = ndrShipments.length;
+    
+    // RTO percentage based on delivered orders only
+    const rtoPercentage = deliveredCount > 0 ? (rtoCount / deliveredCount) * 100 : 0;
+    const deliveredPercentage = totalShipments > 0 ? (deliveredCount / totalShipments) * 100 : 0;
+
+    // Out for delivery count
+    const outForDeliveryCount = formattedShipments.filter((s: any) => 
+      s.status?.toLowerCase().includes('out for delivery') || 
+      s.status?.toLowerCase().includes('out_for_delivery') ||
+      s.status?.toLowerCase() === 'out for delivery'
+    ).length;
 
     const totalShippingCost = formattedShipments.reduce((sum: number, s: any) => sum + s.shippingCharge, 0);
 
@@ -276,10 +313,13 @@ serve(async (req) => {
           totalShipments,
           rtoCount,
           rtoPercentage,
-          deliveredCount: deliveredShipments.length,
+          deliveredCount,
           deliveredPercentage,
           totalShippingCost,
+          outForDeliveryCount,
+          ndrCount,
         },
+        codRemittance: codRemittanceData,
         total: formattedShipments.length,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

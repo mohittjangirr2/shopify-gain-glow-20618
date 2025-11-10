@@ -8,7 +8,7 @@ import { Users, TrendingUp, DollarSign, ShoppingCart } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const Customers = () => {
-  const { data: ordersData, isLoading } = useQuery({
+  const { data: ordersData, isLoading: ordersLoading } = useQuery({
     queryKey: ['shopify-orders', 30],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('fetch-shopify-orders', {
@@ -19,20 +19,55 @@ const Customers = () => {
     },
   });
 
+  const { data: shipmentsData, isLoading: shipmentsLoading } = useQuery({
+    queryKey: ['shiprocket-shipments', 30],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('fetch-shiprocket-shipments', {
+        body: { dateRange: 30 }
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const customerMetrics = useMemo(() => {
     if (!ordersData?.orders) return null;
 
+    // Create a map of Shiprocket customer data by order number
+    const shiprocketCustomerMap = new Map();
+    if (shipmentsData?.shipments) {
+      shipmentsData.shipments.forEach((shipment: any) => {
+        if (shipment.orderNumber) {
+          shiprocketCustomerMap.set(shipment.orderNumber, {
+            customerName: shipment.customerName,
+            email: shipment.customerEmail,
+            phone: shipment.customerPhone,
+            state: shipment.customerState,
+          });
+        }
+      });
+    }
+
     const customerMap = new Map();
     ordersData.orders.forEach((order: any) => {
-      const customerKey = order.customerId || order.email || order.phone || order.customerName;
+      // Get Shiprocket data if available
+      const shiprocketData = shiprocketCustomerMap.get(order.orderNumber) || {};
+      
+      // Merge data, preferring Shopify but filling gaps with Shiprocket
+      const customerName = order.customerName || shiprocketData.customerName || 'Unknown Customer';
+      const email = order.email || shiprocketData.email || 'No Email';
+      const phone = order.phone || shiprocketData.phone || 'No Phone';
+      const province = order.province || shiprocketData.state || 'Unknown State';
+      
+      const customerKey = order.customerId || email || phone || customerName;
       if (!customerKey) return;
 
       const existing = customerMap.get(customerKey) || {
         customerId: order.customerId,
-        customerName: order.customerName || 'N/A',
-        email: order.email,
-        phone: order.phone,
-        province: order.province,
+        customerName,
+        email,
+        phone,
+        province,
         orders: 0,
         revenue: 0,
         profit: 0,
@@ -67,20 +102,20 @@ const Customers = () => {
       avgOrderValue,
       repeatRate,
     };
-  }, [ordersData]);
+  }, [ordersData, shipmentsData]);
 
   const columns = [
-    { header: "Customer", accessor: "customerName", cell: (v: string | null) => v || "N/A" },
-    { header: "Email", accessor: "email", cell: (v: string | null) => v || "N/A" },
-    { header: "Phone", accessor: "phone", cell: (v: string | null) => v || "N/A" },
-    { header: "Province", accessor: "province", cell: (v: string | null) => v || "N/A" },
+    { header: "Customer", accessor: "customerName" },
+    { header: "Email", accessor: "email" },
+    { header: "Phone", accessor: "phone" },
+    { header: "Province", accessor: "province" },
     { header: "Orders", accessor: "orders" },
     { header: "Revenue", accessor: "revenue", cell: (v: number) => `₹${v.toFixed(2)}` },
     { header: "Profit", accessor: "profit", cell: (v: number) => <span className={v >= 0 ? "text-success" : "text-destructive"}>₹{v.toFixed(2)}</span> },
     { header: "AOV", accessor: "avgOrderValue", cell: (v: number) => `₹${v.toFixed(2)}` },
   ];
 
-  if (isLoading) {
+  if (ordersLoading || shipmentsLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 

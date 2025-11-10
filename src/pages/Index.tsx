@@ -147,6 +147,8 @@ const Index = () => {
     const rtoPercentage = shipmentsData?.metrics?.rtoPercentage || 0;
     const deliveredCount = shipmentsData?.metrics?.deliveredCount || 0;
     const deliveredPercentage = shipmentsData?.metrics?.deliveredPercentage || 0;
+    const outForDeliveryCount = shipmentsData?.metrics?.outForDeliveryCount || 0;
+    const ndrCount = shipmentsData?.metrics?.ndrCount || 0;
 
     // Build set of delivered order IDs from shipments
     const deliveredOrderIds = new Set<string>();
@@ -174,6 +176,8 @@ const Index = () => {
       rtoPercentage,
       deliveredCount,
       deliveredPercentage,
+      outForDeliveryCount,
+      ndrCount,
       totalFees,
       feeBreakdown: breakdown,
       totalProfit,
@@ -353,8 +357,8 @@ const Index = () => {
 
         <div className="grid grid-cols-2 gap-3 mb-6 md:grid-cols-4 md:gap-4 md:mb-8">
           <MetricCard title="Orders" value={analytics.totalOrders} icon={ShoppingCart} />
+          <MetricCard title="Out for Delivery" value={analytics.outForDeliveryCount} icon={Truck} variant="default" />
           <MetricCard title="Ad Spend" value={`₹${analytics.totalAdSpend.toFixed(0)}`} icon={Target} variant="warning" />
-          <MetricCard title="Shipping" value={`₹${analytics.totalShippingCost.toFixed(0)}`} icon={Truck} />
           <MetricCard title="AOV" value={`₹${analytics.aov.toFixed(0)}`} icon={Package} />
         </div>
 
