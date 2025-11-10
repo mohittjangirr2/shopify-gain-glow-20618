@@ -83,6 +83,54 @@ serve(async (req) => {
       }
     }
 
+    // Fetch Shiprocket shipments to get customer names
+    console.log('Fetching Shiprocket shipments for customer data...');
+    const shiprocketEmail = Deno.env.get('SHIPROCKET_EMAIL');
+    const shiprocketPassword = Deno.env.get('SHIPROCKET_PASSWORD');
+    
+    let shiprocketCustomerMap = new Map();
+    if (shiprocketEmail && shiprocketPassword) {
+      try {
+        // Authenticate with Shiprocket
+        const authResponse = await fetch('https://apiv2.shiprocket.in/v1/external/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: shiprocketEmail, password: shiprocketPassword }),
+        });
+
+        if (authResponse.ok) {
+          const authData = await authResponse.json();
+          const token = authData.token;
+
+          // Fetch shipments
+          const shipmentsResponse = await fetch('https://apiv2.shiprocket.in/v1/external/shipments?per_page=250', {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+
+          if (shipmentsResponse.ok) {
+            const shipmentsData = await shipmentsResponse.json();
+            const shipments = shipmentsData.data || [];
+            
+            // Map Shopify order names to Shiprocket customer names
+            shipments.forEach((shipment: any) => {
+              const orderName = shipment.channel_order_id;
+              const customerName = shipment.customer_name;
+              if (orderName && customerName) {
+                shiprocketCustomerMap.set(orderName, customerName);
+              }
+            });
+            
+            console.log(`Mapped ${shiprocketCustomerMap.size} customer names from Shiprocket`);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching Shiprocket data:', error);
+      }
+    }
+
     // Filter by date range if provided
     if (dateRange) {
       const now = new Date();
@@ -160,15 +208,19 @@ serve(async (req) => {
         return sum + (variantCost * (item.quantity || 1));
       }, 0);
       
+      // Get customer name from Shiprocket if available, otherwise from Shopify
+      const shiprocketCustomerName = shiprocketCustomerMap.get(order.name);
+      const shopifyCustomerName = order.customer?.first_name && order.customer?.last_name 
+        ? `${order.customer.first_name} ${order.customer.last_name}` 
+        : order.customer?.first_name || order.customer?.last_name || null;
+      
       return {
         orderId: order.id.toString(),
         orderNumber: order.name,
         orderName: order.name,
         customerId: order.customer?.id?.toString() || null,
         date: order.created_at,
-        customerName: order.customer?.first_name && order.customer?.last_name 
-          ? `${order.customer.first_name} ${order.customer.last_name}` 
-          : order.customer?.first_name || order.customer?.last_name || null,
+        customerName: shiprocketCustomerName || shopifyCustomerName,
         email: order.customer?.email || null,
         phone: order.customer?.phone || order.customer?.default_address?.phone || order.shipping_address?.phone || order.billing_address?.phone || order.contact_email || 'No Phone',
         orderValue: parseFloat(order.total_price || '0'),

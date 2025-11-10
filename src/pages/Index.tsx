@@ -162,7 +162,21 @@ const Index = () => {
     // Calculate fees based on settings and delivered orders
     const { totalFees, breakdown } = calculateTotalFees(ordersData?.orders || [], settings, deliveredOrderIds);
     
-    const totalProfit = totalRevenue - (totalCost + totalAdSpend + totalShippingCost + totalFees);
+    // Calculate RTO revenue loss (orders that were RTO'd)
+    const rtoOrders = shipmentsData?.shipments?.filter((s: any) => {
+      const status = s.status?.toLowerCase() || '';
+      const rtoStatus = s.rtoStatus?.toLowerCase() || '';
+      return (status.includes('rto') || rtoStatus.includes('rto')) && !status.includes('ndr');
+    }) || [];
+    
+    const rtoRevenueLoss = rtoOrders.reduce((sum: number, shipment: any) => {
+      const matchingOrder = ordersData?.orders?.find((o: any) => 
+        o.orderNumber === shipment.orderNumber || o.orderId === shipment.orderId
+      );
+      return sum + (matchingOrder?.orderValue || 0);
+    }, 0);
+    
+    const totalProfit = totalRevenue - (totalCost + totalAdSpend + totalShippingCost + totalFees + rtoRevenueLoss);
     const roi = totalAdSpend > 0 ? (totalRevenue / totalAdSpend) * 100 : 0;
     const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
@@ -180,6 +194,7 @@ const Index = () => {
       ndrCount,
       totalFees,
       feeBreakdown: breakdown,
+      rtoRevenueLoss,
       totalProfit,
       roi,
       aov,

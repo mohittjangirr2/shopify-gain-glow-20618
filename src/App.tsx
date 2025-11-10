@@ -12,6 +12,7 @@ import NDR from "./pages/NDR";
 import Products from "./pages/Products";
 import Customers from "./pages/Customers";
 import DeliveredOrders from "./pages/DeliveredOrders";
+import VendorPayments from "./pages/VendorPayments";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Navigation from "./components/Navigation";
@@ -46,6 +47,13 @@ const App = () => (
             <ProtectedRoute>
               <Navigation />
               <NDR />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/vendor-payments" element={
+            <ProtectedRoute>
+              <Navigation />
+              <VendorPayments />
               <Footer />
             </ProtectedRoute>
           } />
