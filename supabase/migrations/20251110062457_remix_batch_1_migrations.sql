@@ -1,4 +1,6 @@
 
+-- Migration: 20251110055220
+
 -- Migration: 20251110035633
 
 -- Migration: 20251110032136
@@ -104,3 +106,4 @@ ADD COLUMN IF NOT EXISTS footer_names TEXT DEFAULT 'Mohit Jangir & Jainendra Bha
 -- Migration: 20251110043638
 -- Trigger types regeneration by adding a comment
 COMMENT ON TABLE public.api_settings IS 'Stores API configuration and credentials for each user';
+
