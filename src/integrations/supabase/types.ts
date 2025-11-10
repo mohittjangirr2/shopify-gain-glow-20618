@@ -22,6 +22,8 @@ export type Database = {
           facebook_ad_account_id: string | null
           facebook_app_id: string | null
           facebook_app_secret: string | null
+          footer_names: string | null
+          footer_text: string | null
           id: string
           marketer_enabled: boolean | null
           marketer_type: string | null
@@ -42,6 +44,8 @@ export type Database = {
           facebook_ad_account_id?: string | null
           facebook_app_id?: string | null
           facebook_app_secret?: string | null
+          footer_names?: string | null
+          footer_text?: string | null
           id?: string
           marketer_enabled?: boolean | null
           marketer_type?: string | null
@@ -62,6 +66,8 @@ export type Database = {
           facebook_ad_account_id?: string | null
           facebook_app_id?: string | null
           facebook_app_secret?: string | null
+          footer_names?: string | null
+          footer_text?: string | null
           id?: string
           marketer_enabled?: boolean | null
           marketer_type?: string | null

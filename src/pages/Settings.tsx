@@ -33,6 +33,10 @@ const Settings = () => {
   
   // COD Remittance Fee
   const [codRemittanceFee, setCodRemittanceFee] = useState("0.49");
+  
+  // Footer Settings
+  const [footerText, setFooterText] = useState("Built with 💪 by");
+  const [footerNames, setFooterNames] = useState("Mohit Jangir & Jainendra Bhati");
 
   useEffect(() => {
     loadSettings();
@@ -71,6 +75,8 @@ const Settings = () => {
         setMarketerEnabled(data.marketer_enabled ?? false);
         setMarketerType((data.marketer_type as "percentage" | "fixed") || "percentage");
         setMarketerValue(data.marketer_value?.toString() || "");
+        setFooterText(data.footer_text || "Built with 💪 by");
+        setFooterNames(data.footer_names || "Mohit Jangir & Jainendra Bhati");
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -103,6 +109,8 @@ const Settings = () => {
         marketer_enabled: marketerEnabled,
         marketer_type: marketerType,
         marketer_value: parseFloat(marketerValue || "0"),
+        footer_text: footerText,
+        footer_names: footerNames,
       };
 
       const { error } = await supabase
@@ -399,15 +407,35 @@ const Settings = () => {
           <TabsContent value="other" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Other Settings</CardTitle>
+                <CardTitle>Footer Settings</CardTitle>
                 <CardDescription>
-                  Additional configuration options
+                  Customize your footer text
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  More settings coming soon...
-                </p>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="footer-text">Footer Text</Label>
+                  <Input
+                    id="footer-text"
+                    value={footerText}
+                    onChange={(e) => setFooterText(e.target.value)}
+                    placeholder="Built with 💪 by"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="footer-names">Names</Label>
+                  <Input
+                    id="footer-names"
+                    value={footerNames}
+                    onChange={(e) => setFooterNames(e.target.value)}
+                    placeholder="Mohit Jangir & Jainendra Bhati"
+                  />
+                </div>
+                <div className="rounded-lg border p-4 bg-muted/50">
+                  <p className="text-sm text-center text-muted-foreground">
+                    Preview: {footerText} <span className="font-semibold text-foreground">{footerNames}</span>
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

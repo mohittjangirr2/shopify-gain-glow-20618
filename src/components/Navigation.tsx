@@ -2,11 +2,35 @@ import { NavLink } from "@/components/NavLink";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Home, Package, TrendingDown, Settings, Menu } from "lucide-react";
-import { useState } from "react";
+import { Home, Package, TrendingDown, Settings, Menu, LogOut, LogIn } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logged out successfully!");
+    navigate("/auth");
+  };
 
   const navItems = [
     { to: "/", label: "Dashboard", icon: Home },
@@ -33,6 +57,18 @@ const Navigation = () => {
                 {item.label}
               </NavLink>
             ))}
+            
+            {user ? (
+              <Button onClick={handleLogout} variant="outline" size="sm" className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            ) : (
+              <Button onClick={() => navigate("/auth")} variant="default" size="sm" className="gap-2">
+                <LogIn className="h-4 w-4" />
+                Login
+              </Button>
+            )}
           </div>
 
           {/* Mobile Navigation */}
@@ -56,6 +92,20 @@ const Navigation = () => {
                     {item.label}
                   </NavLink>
                 ))}
+                
+                <div className="pt-4 border-t">
+                  {user ? (
+                    <Button onClick={() => { handleLogout(); setIsOpen(false); }} variant="outline" className="w-full gap-2">
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </Button>
+                  ) : (
+                    <Button onClick={() => { navigate("/auth"); setIsOpen(false); }} className="w-full gap-2">
+                      <LogIn className="h-4 w-4" />
+                      Login
+                    </Button>
+                  )}
+                </div>
               </div>
             </SheetContent>
           </Sheet>

@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import RTO from "./pages/RTO";
+import Auth from "./pages/Auth";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
 
@@ -22,6 +23,7 @@ const App = () => (
           <Navigation />
           <main className="flex-1">
             <Routes>
+              <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<Index />} />
               <Route path="/rto" element={<RTO />} />
               <Route path="/settings" element={<Settings />} />
