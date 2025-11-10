@@ -1,0 +1,250 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const email = Deno.env.get('SHIPROCKET_EMAIL');
+    const password = Deno.env.get('SHIPROCKET_PASSWORD');
+
+    if (!email || !password) {
+      throw new Error('Shiprocket credentials not configured');
+    }
+
+    const { dateRange } = await req.json();
+
+    console.log('Authenticating with Shiprocket using email:', email);
+
+    // Authenticate with Shiprocket
+    const authResponse = await fetch('https://apiv2.shiprocket.in/v1/external/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!authResponse.ok) {
+      const errorText = await authResponse.text();
+      console.error('Shiprocket auth error response:', errorText);
+      throw new Error(`Shiprocket auth error (${authResponse.status}): ${errorText}`);
+    }
+
+    const authData = await authResponse.json();
+    const token = authData.token;
+
+    if (!token) {
+      console.error('No token received from Shiprocket:', authData);
+      throw new Error('Shiprocket authentication failed - no token received');
+    }
+
+    console.log('Successfully authenticated with Shiprocket, fetching shipments...');
+
+    // Fetch ALL shipments with pagination
+    let allShipments: any[] = [];
+    let currentPage = 1;
+    let hasMoreShipments = true;
+
+    while (hasMoreShipments) {
+      const shipmentsResponse = await fetch(`https://apiv2.shiprocket.in/v1/external/shipments?per_page=100&page=${currentPage}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!shipmentsResponse.ok) {
+        const errorText = await shipmentsResponse.text();
+        console.error('Shiprocket shipments error response:', errorText);
+        throw new Error(`Shiprocket shipments error (${shipmentsResponse.status}): ${errorText}`);
+      }
+
+      const shipmentsData = await shipmentsResponse.json();
+      const shipments = shipmentsData.data || [];
+      
+      allShipments = allShipments.concat(shipments);
+      
+      // Check if there are more pages
+      hasMoreShipments = shipments.length === 100;
+      currentPage++;
+      
+      console.log(`Fetched page ${currentPage - 1}, total shipments so far: ${allShipments.length}`);
+    }
+    
+    // Fetch ALL orders with pagination
+    let allOrders: any[] = [];
+    let currentOrderPage = 1;
+    let hasMoreOrders = true;
+
+    while (hasMoreOrders) {
+      const ordersResponse = await fetch(`https://apiv2.shiprocket.in/v1/external/orders?per_page=100&page=${currentOrderPage}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (ordersResponse.ok) {
+        const ordersData = await ordersResponse.json();
+        const orders = ordersData.data || [];
+        
+        allOrders = allOrders.concat(orders);
+        
+        hasMoreOrders = orders.length === 100;
+        currentOrderPage++;
+        
+        console.log(`Fetched order page ${currentOrderPage - 1}, total orders so far: ${allOrders.length}`);
+      } else {
+        hasMoreOrders = false;
+      }
+    }
+    
+    const ordersMap = new Map(allOrders.map((order: any) => [order.id, order]));
+    
+    // Filter shipments by date range
+    let filteredShipments = allShipments;
+    if (dateRange) {
+      const now = new Date();
+      let filterDate: Date;
+      
+      if (dateRange === 'today') {
+        filterDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      } else {
+        filterDate = new Date(now.getTime() - dateRange * 24 * 60 * 60 * 1000);
+      }
+      
+      filteredShipments = allShipments.filter((shipment: any) => {
+        const shipmentDate = shipment.pickup_scheduled_date || shipment.awb_assign_date || shipment.created_at;
+        return shipmentDate && new Date(shipmentDate) >= filterDate;
+      });
+    }
+    
+    console.log('Sample order data:', JSON.stringify(allOrders[0], null, 2));
+    console.log('Sample shipment data (first item):', JSON.stringify(filteredShipments[0], null, 2));
+    console.log(`Total shipments fetched: ${allShipments.length}, filtered: ${filteredShipments.length}`);
+    console.log(`Total orders fetched: ${allOrders.length}`);
+    
+    // Format shipments with all available fields
+    const formattedShipments = filteredShipments.map((shipment: any) => {
+      const orderItems = shipment.products || shipment.order_items || [];
+      // Charges are directly in shipment.charges, not in awb_data
+      const charges = shipment.charges || {};
+      
+      // Get matching order to find channel_order_id (Shopify order name)
+      const matchingOrder: any = ordersMap.get(shipment.order_id);
+      const shopifyOrderName = matchingOrder?.channel_order_id || null;
+      
+      return {
+        id: shipment.id?.toString() || null,
+        orderId: shipment.order_id?.toString() || null,
+        orderNumber: shopifyOrderName || shipment.channel_order_id || shipment.order_id?.toString() || null,
+        awb: shipment.awb_code || shipment.awb || null,
+        courier: shipment.courier_name || shipment.courier_company_id || null,
+        
+        // Customer details
+        customerName: shipment.customer_name || null,
+        customerEmail: shipment.customer_email || null,
+        customerPhone: shipment.customer_phone || null,
+        customerAddress: shipment.customer_address || shipment.pickup_location || null,
+        customerCity: shipment.customer_city || null,
+        customerState: shipment.customer_state || null,
+        customerPincode: shipment.customer_pincode || null,
+        
+        // Shipping details
+        weight: shipment.weight || shipment.volumetric_weight || 0,
+        dimensions: shipment.dimensions || `${shipment.length || 0}x${shipment.breadth || 0}x${shipment.height || 0}`,
+        
+        // Costs and charges - directly from shipment.charges with better parsing
+        shippingCharge: (() => {
+          const freight = parseFloat(charges.freight_charges || charges.applied_weight_amount || '0');
+          const cod = parseFloat(charges.cod_charges || '0');
+          return (freight || 0) + (cod || 0);
+        })(),
+        codCharges: parseFloat(charges.cod_charges || '0') || 0,
+        freightCharges: parseFloat(charges.freight_charges || charges.applied_weight_amount || '0') || 0,
+        otherCharges: parseFloat(charges.other_charges || charges.others || '0') || 0,
+        discount: parseFloat(shipment.discount || '0') || 0,
+        
+        // Raw charges for debugging
+        _rawCharges: charges,
+        
+        // Status and dates
+        status: shipment.status || shipment.shipment_status || 'pending',
+        rtoStatus: shipment.rto_status || null,
+        deliveryDate: shipment.delivered_date || shipment.delivery_date || null,
+        rtoDeliveredDate: shipment.rto_delivered_date || null,
+        rtoInitiatedDate: shipment.rto_initiated_date || null,
+        pickupScheduledDate: shipment.pickup_scheduled_date || null,
+        awbAssignDate: shipment.awb_assign_date || null,
+        
+        // Additional details
+        paymentMethod: shipment.payment_method || null,
+        pickupLocation: shipment.pickup_location || null,
+        etd: shipment.etd || null,
+        invoiceNo: shipment.invoice_number || null,
+        brandName: shipment.company_name || null,
+        rtoReason: shipment.rto_reason || null,
+        
+        // Delivery details
+        pickupBoyName: shipment.pickup_generated_by || null,
+        deliveryExecutiveName: shipment.delivery_boy || null,
+        deliveryExecutiveNumber: shipment.delivery_boy_contact || null,
+        delayReason: shipment.delay_remark || null,
+        
+        // Activities
+        activities: shipment.activities || [],
+        
+        // Products
+        products: orderItems,
+      };
+    });
+
+    // Calculate RTO metrics
+    const totalShipments = formattedShipments.length;
+    const rtoShipments = formattedShipments.filter((s: any) => 
+      s.status?.toLowerCase().includes('rto') || s.rtoStatus?.toLowerCase().includes('rto')
+    );
+    const rtoCount = rtoShipments.length;
+    const rtoPercentage = totalShipments > 0 ? (rtoCount / totalShipments) * 100 : 0;
+
+    const deliveredShipments = formattedShipments.filter((s: any) => 
+      s.status?.toLowerCase() === 'delivered'
+    );
+    const deliveredPercentage = totalShipments > 0 ? (deliveredShipments.length / totalShipments) * 100 : 0;
+
+    const totalShippingCost = formattedShipments.reduce((sum: number, s: any) => sum + s.shippingCharge, 0);
+
+    console.log(`Fetched ${formattedShipments.length} shipments from Shiprocket`);
+    console.log('Sample formatted shipment:', JSON.stringify(formattedShipments[0], null, 2));
+
+    return new Response(
+      JSON.stringify({ 
+        shipments: formattedShipments,
+        metrics: {
+          totalShipments,
+          rtoCount,
+          rtoPercentage,
+          deliveredCount: deliveredShipments.length,
+          deliveredPercentage,
+          totalShippingCost,
+        },
+        total: formattedShipments.length,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error fetching Shiprocket shipments:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
