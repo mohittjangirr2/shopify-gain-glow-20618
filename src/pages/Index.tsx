@@ -148,8 +148,17 @@ const Index = () => {
     const deliveredCount = shipmentsData?.metrics?.deliveredCount || 0;
     const deliveredPercentage = shipmentsData?.metrics?.deliveredPercentage || 0;
 
-    // Calculate fees based on settings
-    const { totalFees, breakdown } = calculateTotalFees(ordersData?.orders || [], settings);
+    // Build set of delivered order IDs from shipments
+    const deliveredOrderIds = new Set<string>();
+    shipmentsData?.shipments?.forEach((shipment: any) => {
+      if (shipment.status?.toLowerCase() === 'delivered') {
+        if (shipment.orderNumber) deliveredOrderIds.add(shipment.orderNumber);
+        if (shipment.orderId) deliveredOrderIds.add(shipment.orderId);
+      }
+    });
+
+    // Calculate fees based on settings and delivered orders
+    const { totalFees, breakdown } = calculateTotalFees(ordersData?.orders || [], settings, deliveredOrderIds);
     
     const totalProfit = totalRevenue - (totalCost + totalAdSpend + totalShippingCost + totalFees);
     const roi = totalAdSpend > 0 ? (totalRevenue / totalAdSpend) * 100 : 0;

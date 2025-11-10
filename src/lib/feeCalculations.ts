@@ -36,7 +36,8 @@ export const getDefaultSettings = (): FeeSettings => {
 
 export const calculateOrderFees = (
   order: any,
-  settings: FeeSettings
+  settings: FeeSettings,
+  isDelivered: boolean = false
 ) => {
   let fees = 0;
   let breakdown: Record<string, number> = {};
@@ -54,8 +55,8 @@ export const calculateOrderFees = (
     breakdown.codRemittance = settings.codRemittance.fee;
   }
 
-  // Marketer commission
-  if (settings.marketer.enabled) {
+  // Marketer commission - only for delivered orders
+  if (settings.marketer.enabled && isDelivered) {
     const marketerFee =
       settings.marketer.type === "percentage"
         ? (order.profit * settings.marketer.value) / 100
@@ -69,7 +70,8 @@ export const calculateOrderFees = (
 
 export const calculateTotalFees = (
   orders: any[],
-  settings: FeeSettings
+  settings: FeeSettings,
+  deliveredOrders: Set<string> = new Set()
 ) => {
   let totalFees = 0;
   let totalBreakdown: Record<string, number> = {
@@ -77,15 +79,25 @@ export const calculateTotalFees = (
     codRemittance: 0,
     marketer: 0,
   };
+  
+  let deliveredCount = 0;
 
   orders.forEach((order) => {
-    const { totalFees: orderFees, breakdown } = calculateOrderFees(order, settings);
+    const isDelivered = deliveredOrders.has(order.orderId || order.orderNumber);
+    if (isDelivered) deliveredCount++;
+    
+    const { totalFees: orderFees, breakdown } = calculateOrderFees(order, settings, isDelivered);
     totalFees += orderFees;
     
     Object.keys(breakdown).forEach((key) => {
       totalBreakdown[key] = (totalBreakdown[key] || 0) + breakdown[key];
     });
   });
+
+  // Add monthly fixed marketer cost if applicable
+  if (settings.marketer.enabled && settings.marketer.type === "fixed") {
+    // Monthly cost already added per order, nothing extra needed
+  }
 
   return { totalFees, breakdown: totalBreakdown };
 };

@@ -133,7 +133,7 @@ serve(async (req) => {
           ? `${order.customer.first_name} ${order.customer.last_name}` 
           : order.customer?.first_name || order.customer?.last_name || null,
         email: order.customer?.email || null,
-        phone: order.customer?.phone || order.shipping_address?.phone || null,
+        phone: order.customer?.phone || order.customer?.default_address?.phone || order.shipping_address?.phone || order.billing_address?.phone || null,
         orderValue: parseFloat(order.total_price || '0'),
         costPrice: totalCost,
         profit: parseFloat(order.total_price || '0') - totalCost,

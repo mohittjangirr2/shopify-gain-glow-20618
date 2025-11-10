@@ -193,14 +193,14 @@ serve(async (req) => {
         awb: shipment.awb_code || shipment.awb || null,
         courier: shipment.courier_name || shipment.courier_company_id || null,
         
-        // Customer details
-        customerName: shipment.customer_name || null,
-        customerEmail: shipment.customer_email || null,
-        customerPhone: shipment.customer_phone || null,
-        customerAddress: shipment.customer_address || shipment.pickup_location || null,
-        customerCity: shipment.customer_city || null,
-        customerState: shipment.customer_state || null,
-        customerPincode: shipment.customer_pincode || null,
+        // Customer details - improved extraction
+        customerName: shipment.customer_name || matchingOrder?.customer_name || null,
+        customerEmail: shipment.customer_email || matchingOrder?.customer_email || null,
+        customerPhone: shipment.customer_phone || matchingOrder?.customer_phone || matchingOrder?.customer_mobile || null,
+        customerAddress: shipment.customer_address || matchingOrder?.customer_address || shipment.pickup_location || null,
+        customerCity: shipment.customer_city || matchingOrder?.customer_city || null,
+        customerState: shipment.customer_state || matchingOrder?.customer_state || null,
+        customerPincode: shipment.customer_pincode || matchingOrder?.customer_pincode || null,
         
         // Shipping details
         weight: shipment.weight || shipment.volumetric_weight || 0,

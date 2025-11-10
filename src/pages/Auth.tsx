@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Eye, EyeOff, Sparkles, Zap, Target } from "lucide-react";
+import { Eye, EyeOff, Target } from "lucide-react";
 import { z } from "zod";
+import { Logo } from "@/components/Logo";
 
 const emailSchema = z.string().trim().email({ message: "Invalid email address" });
 const passwordSchema = z.string().min(6, { message: "Password must be at least 6 characters" });
@@ -65,7 +66,7 @@ const Auth = () => {
         return;
       }
 
-      toast.success("Welcome back! 🚀");
+      toast.success("Welcome back!");
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -108,7 +109,7 @@ const Auth = () => {
         return;
       }
 
-      toast.success("Account created! Check your email to verify 📧");
+      toast.success("Account created successfully!");
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -130,16 +131,13 @@ const Auth = () => {
       <Card className="w-full max-w-md relative z-10 border-2 backdrop-blur-sm bg-card/80">
         <CardHeader className="space-y-1 text-center pb-6">
           <div className="flex justify-center mb-4">
-            <div className="relative">
-              <Sparkles className="h-12 w-12 text-primary animate-pulse" />
-              <Zap className="h-6 w-6 text-secondary absolute -top-1 -right-1 animate-bounce" />
-            </div>
+            <Logo className="scale-125" />
           </div>
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Welcome Fam! 👋
+            Analytics Dashboard
           </CardTitle>
           <CardDescription className="text-base">
-            Let's get you in and start crushing it! 💪
+            Track your business performance in real-time
           </CardDescription>
         </CardHeader>
 
@@ -196,7 +194,7 @@ const Auth = () => {
                   className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all transform hover:scale-[1.02]"
                   disabled={loading}
                 >
-                  {loading ? "Logging in..." : "Login 🚀"}
+                  {loading ? "Logging in..." : "Login"}
                 </Button>
               </form>
             </TabsContent>
@@ -256,7 +254,7 @@ const Auth = () => {
                   className="w-full bg-gradient-to-r from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 transition-all transform hover:scale-[1.02]"
                   disabled={loading}
                 >
-                  {loading ? "Creating account..." : "Sign Up ✨"}
+                  {loading ? "Creating account..." : "Sign Up"}
                 </Button>
               </form>
             </TabsContent>

@@ -2,7 +2,7 @@ import { NavLink } from "@/components/NavLink";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Home, Package, TrendingDown, Settings, Menu, LogOut, LogIn } from "lucide-react";
+import { Home, Package, TrendingDown, Settings, Menu, LogOut, LogIn, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +35,8 @@ const Navigation = () => {
   const navItems = [
     { to: "/", label: "Dashboard", icon: Home },
     { to: "/rto", label: "RTO", icon: TrendingDown },
+    { to: "/products", label: "Products", icon: Package },
+    { to: "/customers", label: "Customers", icon: Users },
     { to: "/settings", label: "Settings", icon: Settings },
   ];
 
