@@ -43,24 +43,28 @@ const VendorPayments = () => {
     // Calculate vendor costs only for delivered orders
     const vendorData = new Map();
     ordersData.orders.forEach((order: any) => {
-      const isDelivered = deliveredOrderIds.has(order.orderId || order.orderNumber);
+      const isDelivered = deliveredOrderIds.has(order.orderNumber) || deliveredOrderIds.has(order.orderName) || deliveredOrderIds.has(String(order.orderId));
       if (!isDelivered) return; // Only count delivered orders
 
-      const vendor = order.vendor || 'Unknown Vendor';
-      const costPrice = order.costPrice || 0;
+      // Process line items for vendor information
+      const lineItems = order.lineItems || [];
+      lineItems.forEach((item: any) => {
+        const vendor = item.vendor || order.vendor || 'Unknown Vendor';
+        const itemCost = (item.cost || 0) * (item.quantity || 1);
 
-      const existing = vendorData.get(vendor) || {
-        vendor,
-        totalCost: 0,
-        deliveredOrders: 0,
-        revenue: 0,
-      };
+        const existing = vendorData.get(vendor) || {
+          vendor,
+          totalCost: 0,
+          deliveredOrders: 0,
+          revenue: 0,
+        };
 
-      vendorData.set(vendor, {
-        ...existing,
-        totalCost: existing.totalCost + costPrice,
-        deliveredOrders: existing.deliveredOrders + 1,
-        revenue: existing.revenue + (order.orderValue || 0),
+        vendorData.set(vendor, {
+          ...existing,
+          totalCost: existing.totalCost + itemCost,
+          deliveredOrders: existing.deliveredOrders + 1,
+          revenue: existing.revenue + (order.orderValue || 0),
+        });
       });
     });
 

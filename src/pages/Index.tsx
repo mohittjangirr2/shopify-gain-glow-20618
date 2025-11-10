@@ -149,6 +149,7 @@ const Index = () => {
     const deliveredPercentage = shipmentsData?.metrics?.deliveredPercentage || 0;
     const outForDeliveryCount = shipmentsData?.metrics?.outForDeliveryCount || 0;
     const ndrCount = shipmentsData?.metrics?.ndrCount || 0;
+    const walletBalance = shipmentsData?.walletBalance || 0;
 
     // Build set of delivered order IDs from shipments
     const deliveredOrderIds = new Set<string>();
@@ -195,6 +196,7 @@ const Index = () => {
       totalFees,
       feeBreakdown: breakdown,
       rtoRevenueLoss,
+      walletBalance,
       totalProfit,
       roi,
       aov,
@@ -266,10 +268,10 @@ const Index = () => {
       .slice(-30); // Last 30 days
   }, [ordersData]);
 
-  // Updated columns - remove null values
+  // Updated columns - remove null values and make orders clickable
   const ordersColumns = [
-    { header: "Order #", accessor: "orderName", cell: (value: string) => (
-      <Button variant="link" className="p-0 h-auto font-medium" onClick={(e) => e.stopPropagation()}>
+    { header: "Order #", accessor: "orderName", cell: (value: string, row: any) => (
+      <Button variant="link" className="p-0 h-auto font-medium" onClick={() => { setSelectedOrder(row); setDialogOpen(true); }}>
         {value}
       </Button>
     )},
@@ -370,11 +372,12 @@ const Index = () => {
           <MetricCard title="Ad Spend" value={`₹${analytics.totalAdSpend.toFixed(0)}`} icon={Target} variant="default" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6 md:grid-cols-4 md:gap-4 md:mb-8">
+        <div className="grid grid-cols-2 gap-3 mb-6 md:grid-cols-5 md:gap-4 md:mb-8">
           <MetricCard title="Out for Delivery" value={analytics.outForDeliveryCount} icon={Truck} variant="success" />
           <MetricCard title="Total Orders" value={analytics.totalOrders} icon={ShoppingCart} />
           <MetricCard title="RTO %" value={`${analytics.rtoPercentage.toFixed(1)}%`} icon={TrendingDown} variant="destructive" />
           <MetricCard title="AOV" value={`₹${analytics.aov.toFixed(0)}`} icon={DollarSign} />
+          <MetricCard title="Wallet Balance" value={`₹${analytics.walletBalance.toFixed(0)}`} icon={DollarSign} variant="success" />
         </div>
 
         {/* Charts Row 1 */}
@@ -413,11 +416,12 @@ const Index = () => {
                     data={[
                       { name: 'Delivered', value: analytics.deliveredCount },
                       { name: 'RTO', value: analytics.rtoCount },
-                      { name: 'Processing', value: analytics.totalOrders - analytics.deliveredCount - analytics.rtoCount },
+                      { name: 'NDR', value: analytics.ndrCount },
+                      { name: 'Processing', value: analytics.totalOrders - analytics.deliveredCount - analytics.rtoCount - analytics.ndrCount },
                     ]}
                     cx="50%" cy="50%" labelLine={false} label outerRadius={80} fill="#8884d8" dataKey="value"
                   >
-                    {[0, 1, 2].map((entry, index) => (
+                    {[0, 1, 2, 3].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>

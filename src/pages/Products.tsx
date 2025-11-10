@@ -1,17 +1,33 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MetricCard } from "@/components/MetricCard";
 import { AdvancedDataTable } from "@/components/AdvancedDataTable";
+import { OrderShipmentDialog } from "@/components/OrderShipmentDialog";
+import { Button } from "@/components/ui/button";
 import { Package, TrendingUp, DollarSign, ShoppingCart } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const Products = () => {
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ['shopify-orders', 30],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('fetch-shopify-orders', {
+        body: { dateRange: 30 }
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: shipmentsData } = useQuery({
+    queryKey: ['shiprocket-shipments', 30],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('fetch-shiprocket-shipments', {
         body: { dateRange: 30 }
       });
       if (error) throw error;
@@ -149,6 +165,13 @@ const Products = () => {
             />
           </CardContent>
         </Card>
+
+        <OrderShipmentDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          order={selectedOrder}
+          shipments={shipmentsData?.shipments || []}
+        />
       </div>
     </div>
   );

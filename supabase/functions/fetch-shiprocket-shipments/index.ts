@@ -75,6 +75,25 @@ serve(async (req) => {
 
     console.log('Successfully authenticated with Shiprocket, fetching shipments...');
 
+    // Fetch wallet balance
+    let walletBalance = 0;
+    try {
+      const walletResponse = await fetch('https://apiv2.shiprocket.in/v1/external/account/details/wallet-balance', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (walletResponse.ok) {
+        const walletData = await walletResponse.json();
+        walletBalance = parseFloat(walletData.data?.balance || '0');
+        console.log('Wallet balance fetched:', walletBalance);
+      }
+    } catch (e) {
+      console.error('Error fetching wallet balance:', e);
+    }
+
     // Fetch COD remittance data
     let codRemittanceData: any = null;
     try {
@@ -334,6 +353,7 @@ serve(async (req) => {
           outForPickupCount,
           remainingCount,
         },
+        walletBalance,
         codRemittance: codRemittanceData,
         total: formattedShipments.length,
       }),

@@ -1,11 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricCard } from "@/components/MetricCard";
 import { AdvancedDataTable, StatusBadge } from "@/components/AdvancedDataTable";
+import { OrderShipmentDialog } from "@/components/OrderShipmentDialog";
+import { Button } from "@/components/ui/button";
 import { AlertCircle, Package, TrendingUp, Phone } from "lucide-react";
 
 const NDR = () => {
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { data: shipmentsData, isLoading } = useQuery({
     queryKey: ['shiprocket-shipments-ndr'],
     queryFn: async () => {
@@ -111,6 +115,13 @@ const NDR = () => {
             </div>
           </div>
         </div>
+
+        <OrderShipmentDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          order={selectedOrder}
+          shipments={shipmentsData?.shipments || []}
+        />
       </main>
     </div>
   );

@@ -1,13 +1,18 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MetricCard } from "@/components/MetricCard";
 import { AdvancedDataTable } from "@/components/AdvancedDataTable";
+import { OrderShipmentDialog } from "@/components/OrderShipmentDialog";
+import { Button } from "@/components/ui/button";
 import { Users, TrendingUp, DollarSign, ShoppingCart } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const Customers = () => {
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
     queryKey: ['shopify-orders', 30],
     queryFn: async () => {
@@ -185,6 +190,13 @@ const Customers = () => {
             />
           </CardContent>
         </Card>
+
+        <OrderShipmentDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          order={selectedOrder}
+          shipments={shipmentsData?.shipments || []}
+        />
       </div>
     </div>
   );

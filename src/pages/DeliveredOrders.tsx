@@ -1,12 +1,16 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MetricCard } from "@/components/MetricCard";
 import { AdvancedDataTable, StatusBadge } from "@/components/AdvancedDataTable";
+import { OrderShipmentDialog } from "@/components/OrderShipmentDialog";
+import { Button } from "@/components/ui/button";
 import { CheckCircle, Package, TrendingUp } from "lucide-react";
 
 const DeliveredOrders = () => {
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { data: shipmentsData, isLoading } = useQuery({
     queryKey: ['shiprocket-shipments', 30],
     queryFn: async () => {
@@ -109,6 +113,13 @@ const DeliveredOrders = () => {
             />
           </CardContent>
         </Card>
+
+        <OrderShipmentDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          order={selectedOrder}
+          shipments={shipmentsData?.shipments || []}
+        />
       </div>
     </div>
   );
