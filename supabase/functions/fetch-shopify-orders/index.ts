@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,8 +12,35 @@ serve(async (req) => {
   }
 
   try {
-    const storeUrl = Deno.env.get('SHOPIFY_STORE_URL');
-    const accessToken = Deno.env.get('SHOPIFY_ACCESS_TOKEN');
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Fetch API settings from database
+    const { data: settings, error: settingsError } = await supabaseClient
+      .from('api_settings')
+      .select('shopify_store_url, shopify_access_token')
+      .eq('user_id', user.id)
+      .single();
+
+    if (settingsError || !settings) {
+      throw new Error('Shopify API settings not configured. Please configure them in Settings.');
+    }
+
+    const storeUrl = settings.shopify_store_url;
+    const accessToken = settings.shopify_access_token;
 
     if (!storeUrl || !accessToken) {
       throw new Error('Shopify credentials not configured');

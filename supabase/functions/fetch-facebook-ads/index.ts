@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,10 +12,37 @@ serve(async (req) => {
   }
 
   try {
-    let accessToken = Deno.env.get('FACEBOOK_ACCESS_TOKEN');
-    const appId = Deno.env.get('FACEBOOK_APP_ID');
-    const appSecret = Deno.env.get('FACEBOOK_APP_SECRET');
-    let adAccountId = Deno.env.get('FACEBOOK_AD_ACCOUNT_ID') || '';
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Fetch API settings from database
+    const { data: settings, error: settingsError } = await supabaseClient
+      .from('api_settings')
+      .select('facebook_access_token, facebook_ad_account_id, facebook_app_id, facebook_app_secret')
+      .eq('user_id', user.id)
+      .single();
+
+    if (settingsError || !settings) {
+      throw new Error('Facebook API settings not configured. Please configure them in Settings.');
+    }
+
+    let accessToken = settings.facebook_access_token;
+    const appId = settings.facebook_app_id;
+    const appSecret = settings.facebook_app_secret;
+    let adAccountId = settings.facebook_ad_account_id || '';
 
     if (!accessToken || !adAccountId) {
       throw new Error('Facebook credentials not configured');

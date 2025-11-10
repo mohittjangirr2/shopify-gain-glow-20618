@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,8 +12,35 @@ serve(async (req) => {
   }
 
   try {
-    const email = Deno.env.get('SHIPROCKET_EMAIL');
-    const password = Deno.env.get('SHIPROCKET_PASSWORD');
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Fetch API settings from database
+    const { data: settings, error: settingsError } = await supabaseClient
+      .from('api_settings')
+      .select('shiprocket_email, shiprocket_password')
+      .eq('user_id', user.id)
+      .single();
+
+    if (settingsError || !settings) {
+      throw new Error('Shiprocket API settings not configured. Please configure them in Settings.');
+    }
+
+    const email = settings.shiprocket_email;
+    const password = settings.shiprocket_password;
 
     if (!email || !password) {
       throw new Error('Shiprocket credentials not configured');
