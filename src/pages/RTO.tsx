@@ -29,7 +29,8 @@ const RTO = () => {
 
     const totalShipments = shipments.length;
     const rtoCount = rtoShipments.length;
-    const rtoPercentage = totalShipments > 0 ? (rtoCount / totalShipments) * 100 : 0;
+    const deliveredCount = shipments.filter((s: any) => s.status?.toLowerCase() === 'delivered').length;
+    const rtoPercentage = deliveredCount > 0 ? (rtoCount / deliveredCount) * 100 : 0;
 
     const rtoLoss = rtoShipments.reduce((sum: number, s: any) => 
       sum + (s.shippingCharge || 0), 0
@@ -63,10 +64,14 @@ const RTO = () => {
       totalRTO: rtoCount,
       rtoPercentage,
       rtoLoss,
-      deliveredCount: shipments.filter((s: any) => s.status?.toLowerCase() === 'delivered').length,
+      deliveredCount,
       rtoByReason,
       rtoByStateData,
-      rtoShipments,
+      rtoShipments: rtoShipments.sort((a: any, b: any) => {
+        const dateA = new Date(a.rtoInitiatedDate || a.pickupScheduledDate || 0).getTime();
+        const dateB = new Date(b.rtoInitiatedDate || b.pickupScheduledDate || 0).getTime();
+        return dateB - dateA; // Newer to older
+      }),
     };
   }, [shipmentsData]);
 

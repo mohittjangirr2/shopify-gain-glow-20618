@@ -189,22 +189,22 @@ serve(async (req) => {
       return {
         id: shipment.id?.toString() || null,
         orderId: shipment.order_id?.toString() || null,
-        orderNumber: shopifyOrderName || shipment.channel_order_id || shipment.order_id?.toString() || null,
-        awb: shipment.awb_code || shipment.awb || null,
-        courier: shipment.courier_name || shipment.courier_company_id || null,
+        orderNumber: shopifyOrderName || shipment.channel_order_id || shipment.order_id?.toString() || 'N/A',
+        awb: shipment.awb_code || shipment.awb || 'N/A',
+        courier: shipment.courier_name || shipment.courier_company_id || 'N/A',
         
         // Customer details - improved extraction
-        customerName: shipment.customer_name || matchingOrder?.customer_name || null,
-        customerEmail: shipment.customer_email || matchingOrder?.customer_email || null,
-        customerPhone: shipment.customer_phone || matchingOrder?.customer_phone || matchingOrder?.customer_mobile || null,
-        customerAddress: shipment.customer_address || matchingOrder?.customer_address || shipment.pickup_location || null,
-        customerCity: shipment.customer_city || matchingOrder?.customer_city || null,
-        customerState: shipment.customer_state || matchingOrder?.customer_state || null,
-        customerPincode: shipment.customer_pincode || matchingOrder?.customer_pincode || null,
+        customerName: shipment.customer_name || matchingOrder?.customer_name || 'N/A',
+        customerEmail: shipment.customer_email || matchingOrder?.customer_email || 'N/A',
+        customerPhone: shipment.customer_phone || matchingOrder?.customer_phone || matchingOrder?.customer_mobile || shipment.customer_alternate_phone || 'N/A',
+        customerAddress: shipment.customer_address || matchingOrder?.customer_address || shipment.pickup_location || 'N/A',
+        customerCity: shipment.customer_city || matchingOrder?.customer_city || 'N/A',
+        customerState: shipment.customer_state || matchingOrder?.customer_state || 'N/A',
+        customerPincode: shipment.customer_pincode || matchingOrder?.customer_pincode || 'N/A',
         
         // Shipping details
-        weight: shipment.weight || shipment.volumetric_weight || 0,
-        dimensions: shipment.dimensions || `${shipment.length || 0}x${shipment.breadth || 0}x${shipment.height || 0}`,
+        weight: shipment.weight || shipment.volumetric_weight || shipment.applied_weight || 'N/A',
+        dimensions: shipment.dimensions || (shipment.length && shipment.breadth && shipment.height ? `${shipment.length}x${shipment.breadth}x${shipment.height}` : 'N/A'),
         
         // Costs and charges - directly from shipment.charges with better parsing
         shippingCharge: (() => {
@@ -230,12 +230,12 @@ serve(async (req) => {
         awbAssignDate: shipment.awb_assign_date || null,
         
         // Additional details
-        paymentMethod: shipment.payment_method || null,
-        pickupLocation: shipment.pickup_location || null,
-        etd: shipment.etd || null,
-        invoiceNo: shipment.invoice_number || null,
-        brandName: shipment.company_name || null,
-        rtoReason: shipment.rto_reason || null,
+        paymentMethod: shipment.payment_method || 'N/A',
+        pickupLocation: shipment.pickup_location || 'N/A',
+        etd: shipment.etd || shipment.expected_delivery_date || 'N/A',
+        invoiceNo: shipment.invoice_number || 'N/A',
+        brandName: shipment.company_name || 'N/A',
+        rtoReason: shipment.rto_reason || 'N/A',
         
         // Delivery details
         pickupBoyName: shipment.pickup_generated_by || null,

@@ -212,6 +212,17 @@ const Index = () => {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
   }, [ordersData]);
+  const columns = [
+    { header: "Order Name", accessor: "name", cell: (v: string | null) => v || "N/A" },
+    { header: "Customer", accessor: "customerName", cell: (v: string | null) => v || "N/A" },
+    { header: "Phone", accessor: "phone", cell: (v: string | null) => v || "N/A" },
+    { header: "Product", accessor: "product", cell: (v: string | null) => v || "N/A" },
+    { header: "Order Value", accessor: "orderValue", cell: (v: number) => `₹${v.toFixed(2)}` },
+    { header: "Cost", accessor: "costPrice", cell: (v: number) => v ? `₹${v.toFixed(2)}` : "N/A" },
+    { header: "Profit", accessor: "profit", cell: (v: number) => <span className={v >= 0 ? "text-success" : "text-destructive"}>₹{v.toFixed(2)}</span> },
+    { header: "Financial Status", accessor: "orderStatus", cell: (v: string | null) => v ? <StatusBadge status={v} /> : "N/A" },
+    { header: "Fulfillment", accessor: "fulfillmentStatus", cell: (v: string | null) => v ? <StatusBadge status={v} /> : "N/A" },
+  ];
 
   // Daily profit tracking
   const dailyProfitData = useMemo(() => {

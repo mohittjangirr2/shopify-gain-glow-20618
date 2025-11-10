@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, Columns3, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Columns3, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface Column {
@@ -48,6 +48,7 @@ export const AdvancedDataTable = ({
     new Set(columns.map(col => col.accessor))
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ accessor: string; direction: 'asc' | 'desc' } | null>(null);
 
   if (isLoading) {
     return (
@@ -74,11 +75,47 @@ export const AdvancedDataTable = ({
       )
     : data;
 
+  // Sort data
+  const sortedData = sortConfig
+    ? [...filteredData].sort((a, b) => {
+        const aVal = a[sortConfig.accessor];
+        const bVal = b[sortConfig.accessor];
+        
+        if (aVal === null || aVal === undefined) return 1;
+        if (bVal === null || bVal === undefined) return -1;
+        
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        
+        const aStr = String(aVal).toLowerCase();
+        const bStr = String(bVal).toLowerCase();
+        
+        if (sortConfig.direction === 'asc') {
+          return aStr < bStr ? -1 : aStr > bStr ? 1 : 0;
+        } else {
+          return aStr > bStr ? -1 : aStr < bStr ? 1 : 0;
+        }
+      })
+    : filteredData;
+
+  const handleSort = (accessor: string) => {
+    setSortConfig(current => {
+      if (!current || current.accessor !== accessor) {
+        return { accessor, direction: 'asc' };
+      }
+      if (current.direction === 'asc') {
+        return { accessor, direction: 'desc' };
+      }
+      return null;
+    });
+  };
+
   // Pagination
-  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const totalPages = Math.ceil(sortedData.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const paginatedData = filteredData.slice(startIndex, endIndex);
+  const paginatedData = sortedData.slice(startIndex, endIndex);
 
   // Toggle column visibility
   const toggleColumn = (accessor: string) => {
@@ -137,41 +174,59 @@ export const AdvancedDataTable = ({
       </div>
 
       {/* Table */}
-      <div className="w-full overflow-auto">
+      <div className="w-full overflow-x-auto">
         <ScrollArea className="h-[400px] md:h-[500px] rounded-md border">
-          <Table>
-            <TableHeader className="sticky top-0 bg-background z-10">
-              <TableRow>
-                {displayColumns.map((column) => (
-                  <TableHead key={column.accessor} className="font-semibold whitespace-nowrap text-xs md:text-sm">
-                    {column.header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map((row, idx) => (
-                <TableRow 
-                  key={idx} 
-                  className={`hover:bg-muted/50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
-                  onClick={() => onRowClick?.(row)}
-                >
+          <div className="min-w-max">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background z-10">
+                <TableRow>
                   {displayColumns.map((column) => (
-                    <TableCell key={column.accessor} className="whitespace-nowrap text-xs md:text-sm">
-                      {column.cell ? column.cell(row[column.accessor], row) : row[column.accessor]}
-                    </TableCell>
+                    <TableHead key={column.accessor} className="font-semibold whitespace-nowrap text-xs md:text-sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2"
+                        onClick={() => handleSort(column.accessor)}
+                      >
+                        {column.header}
+                        {sortConfig?.accessor === column.accessor ? (
+                          sortConfig.direction === 'asc' ? (
+                            <ArrowUp className="ml-2 h-4 w-4" />
+                          ) : (
+                            <ArrowDown className="ml-2 h-4 w-4" />
+                          )
+                        ) : (
+                          <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+                        )}
+                      </Button>
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.map((row, idx) => (
+                  <TableRow 
+                    key={idx} 
+                    className={`hover:bg-muted/50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                    onClick={() => onRowClick?.(row)}
+                  >
+                    {displayColumns.map((column) => (
+                      <TableCell key={column.accessor} className="whitespace-nowrap text-xs md:text-sm">
+                        {column.cell ? column.cell(row[column.accessor], row) : row[column.accessor]}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </ScrollArea>
       </div>
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <div className="text-sm text-muted-foreground">
-          Showing {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
+          Showing {startIndex + 1}-{Math.min(endIndex, sortedData.length)} of {sortedData.length}
         </div>
         <div className="flex items-center gap-2">
           <Button

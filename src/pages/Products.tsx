@@ -68,8 +68,8 @@ const Products = () => {
   }, [ordersData]);
 
   const columns = [
-    { header: "Product", accessor: "product" },
-    { header: "Vendor", accessor: "vendor", cell: (v: string | null) => v || "-" },
+    { header: "Product", accessor: "product", cell: (v: string | null) => v || "N/A" },
+    { header: "Vendor", accessor: "vendor", cell: (v: string | null) => v || "N/A" },
     { header: "Orders", accessor: "orders" },
     { header: "Quantity", accessor: "quantity" },
     { header: "Revenue", accessor: "revenue", cell: (v: number) => `₹${v.toFixed(2)}` },

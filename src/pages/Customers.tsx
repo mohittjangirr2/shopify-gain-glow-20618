@@ -29,7 +29,7 @@ const Customers = () => {
 
       const existing = customerMap.get(customerKey) || {
         customerId: order.customerId,
-        customerName: order.customerName || '-',
+        customerName: order.customerName || 'N/A',
         email: order.email,
         phone: order.phone,
         province: order.province,
@@ -70,10 +70,10 @@ const Customers = () => {
   }, [ordersData]);
 
   const columns = [
-    { header: "Customer", accessor: "customerName" },
-    { header: "Email", accessor: "email", cell: (v: string | null) => v || "-" },
-    { header: "Phone", accessor: "phone", cell: (v: string | null) => v || "-" },
-    { header: "Province", accessor: "province", cell: (v: string | null) => v || "-" },
+    { header: "Customer", accessor: "customerName", cell: (v: string | null) => v || "N/A" },
+    { header: "Email", accessor: "email", cell: (v: string | null) => v || "N/A" },
+    { header: "Phone", accessor: "phone", cell: (v: string | null) => v || "N/A" },
+    { header: "Province", accessor: "province", cell: (v: string | null) => v || "N/A" },
     { header: "Orders", accessor: "orders" },
     { header: "Revenue", accessor: "revenue", cell: (v: number) => `₹${v.toFixed(2)}` },
     { header: "Profit", accessor: "profit", cell: (v: number) => <span className={v >= 0 ? "text-success" : "text-destructive"}>₹{v.toFixed(2)}</span> },
