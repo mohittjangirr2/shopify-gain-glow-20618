@@ -10,7 +10,8 @@ import Settings from "./pages/Settings";
 import RTO from "./pages/RTO";
 import Products from "./pages/Products";
 import Customers from "./pages/Customers";
-import CODRemittance from "./pages/CODRemittance";
+import DeliveredOrders from "./pages/DeliveredOrders";
+import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
@@ -24,8 +25,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={
+          <Route path="/dashboard" element={
             <ProtectedRoute>
               <Navigation />
               <Index />
@@ -36,6 +38,13 @@ const App = () => (
             <ProtectedRoute>
               <Navigation />
               <RTO />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/delivered" element={
+            <ProtectedRoute>
+              <Navigation />
+              <DeliveredOrders />
               <Footer />
             </ProtectedRoute>
           } />
@@ -57,13 +66,6 @@ const App = () => (
             <ProtectedRoute>
               <Navigation />
               <Customers />
-              <Footer />
-            </ProtectedRoute>
-          } />
-          <Route path="/cod-remittance" element={
-            <ProtectedRoute>
-              <Navigation />
-              <CODRemittance />
               <Footer />
             </ProtectedRoute>
           } />

@@ -269,13 +269,15 @@ serve(async (req) => {
       };
     });
 
-    // Calculate RTO metrics - fixed formula: RTO Rate (%) = (Total RTO Orders / Total Delivered Orders) × 100
+    // Calculate RTO metrics - exclude NDR from RTO calculation
     const totalShipments = formattedShipments.length;
     
-    // RTO initiated and delivered (not pending RTO)
-    const rtoShipments = formattedShipments.filter((s: any) => 
-      s.status?.toLowerCase().includes('rto') || s.rtoStatus?.toLowerCase().includes('rto')
-    );
+    // RTO shipments (exclude NDR)
+    const rtoShipments = formattedShipments.filter((s: any) => {
+      const status = s.status?.toLowerCase() || '';
+      const rtoStatus = s.rtoStatus?.toLowerCase() || '';
+      return (status.includes('rto') || rtoStatus.includes('rto')) && !status.includes('ndr');
+    });
     const rtoCount = rtoShipments.length;
     
     // Delivered shipments (excluding RTO)
@@ -284,13 +286,13 @@ serve(async (req) => {
     );
     const deliveredCount = deliveredShipments.length;
     
-    // Correct RTO calculation: RTO / Delivered * 100 (consider NDR as part of potential RTO)
+    // NDR shipments (separate from RTO)
     const ndrShipments = formattedShipments.filter((s: any) => 
       s.status?.toLowerCase().includes('ndr') || s.status?.toLowerCase().includes('action')
     );
     const ndrCount = ndrShipments.length;
     
-    // RTO percentage based on delivered orders only
+    // RTO percentage based on delivered orders only (excluding NDR)
     const rtoPercentage = deliveredCount > 0 ? (rtoCount / deliveredCount) * 100 : 0;
     const deliveredPercentage = totalShipments > 0 ? (deliveredCount / totalShipments) * 100 : 0;
 
@@ -300,6 +302,17 @@ serve(async (req) => {
       s.status?.toLowerCase().includes('out_for_delivery') ||
       s.status?.toLowerCase() === 'out for delivery'
     ).length;
+
+    // Out for pickup count
+    const outForPickupCount = formattedShipments.filter((s: any) => 
+      s.status?.toLowerCase().includes('pickup') || s.status?.toLowerCase().includes('ready to ship')
+    ).length;
+    
+    // Remaining orders (not delivered, RTO, or cancelled)
+    const remainingCount = formattedShipments.filter((s: any) => {
+      const status = s.status?.toLowerCase() || '';
+      return !status.includes('delivered') && !status.includes('rto') && !status.includes('cancelled');
+    }).length;
 
     const totalShippingCost = formattedShipments.reduce((sum: number, s: any) => sum + s.shippingCharge, 0);
 
@@ -318,6 +331,8 @@ serve(async (req) => {
           totalShippingCost,
           outForDeliveryCount,
           ndrCount,
+          outForPickupCount,
+          remainingCount,
         },
         codRemittance: codRemittanceData,
         total: formattedShipments.length,

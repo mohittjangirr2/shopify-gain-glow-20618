@@ -33,11 +33,11 @@ const Navigation = () => {
   };
 
   const navItems = [
-    { to: "/", label: "Dashboard", icon: Home },
+    { to: "/dashboard", label: "Dashboard", icon: Home },
     { to: "/rto", label: "RTO", icon: TrendingDown },
+    { to: "/delivered", label: "Delivered", icon: Package },
     { to: "/products", label: "Products", icon: Package },
     { to: "/customers", label: "Customers", icon: Users },
-    { to: "/cod-remittance", label: "COD Remittance", icon: DollarSign },
     { to: "/settings", label: "Settings", icon: Settings },
   ];
 

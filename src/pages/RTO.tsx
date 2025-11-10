@@ -23,9 +23,12 @@ const RTO = () => {
     if (!shipmentsData?.shipments) return null;
 
     const shipments = shipmentsData.shipments;
-    const rtoShipments = shipments.filter((s: any) => 
-      s.status?.toLowerCase().includes('rto') || s.rtoStatus?.toLowerCase().includes('rto')
-    );
+    // Exclude NDR from RTO calculation
+    const rtoShipments = shipments.filter((s: any) => {
+      const status = s.status?.toLowerCase() || '';
+      const rtoStatus = s.rtoStatus?.toLowerCase() || '';
+      return (status.includes('rto') || rtoStatus.includes('rto')) && !status.includes('ndr');
+    });
 
     const totalShipments = shipments.length;
     const rtoCount = rtoShipments.length;

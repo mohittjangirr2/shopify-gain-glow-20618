@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Footer = () => {
-  const [footerText, setFooterText] = useState("Built with 💪 by");
-  const [footerNames, setFooterNames] = useState("Mohit Jangir & Jainendra Bhati");
+  const [footerText, setFooterText] = useState("Powered by");
+  const [footerNames, setFooterNames] = useState("OVIX Analytics");
 
   useEffect(() => {
     loadFooterSettings();
@@ -21,8 +21,8 @@ const Footer = () => {
         .single();
 
       if (data && !error) {
-        setFooterText(data.footer_text || "Built with 💪 by");
-        setFooterNames(data.footer_names || "Mohit Jangir & Jainendra Bhati");
+        setFooterText(data.footer_text || "Powered by");
+        setFooterNames(data.footer_names || "OVIX Analytics");
       }
     } catch (error) {
       console.error('Error loading footer settings:', error);
