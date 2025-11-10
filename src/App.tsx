@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import RTO from "./pages/RTO";
+import NDR from "./pages/NDR";
 import Products from "./pages/Products";
 import Customers from "./pages/Customers";
 import DeliveredOrders from "./pages/DeliveredOrders";
@@ -38,6 +39,13 @@ const App = () => (
             <ProtectedRoute>
               <Navigation />
               <RTO />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/ndr" element={
+            <ProtectedRoute>
+              <Navigation />
+              <NDR />
               <Footer />
             </ProtectedRoute>
           } />

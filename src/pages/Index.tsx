@@ -351,15 +351,15 @@ const Index = () => {
         <div className="grid grid-cols-2 gap-3 mb-4 md:grid-cols-4 md:gap-4 md:mb-8">
           <MetricCard title="Revenue" value={`₹${analytics.totalRevenue.toFixed(0)}`} icon={DollarSign} variant="default" />
           <MetricCard title="Profit" value={`₹${analytics.totalProfit.toFixed(0)}`} icon={TrendingUp} variant={analytics.totalProfit >= 0 ? "success" : "destructive"} />
-          <MetricCard title="Out for Pickup" value={shipmentsData?.metrics?.outForPickupCount || 0} icon={Package} variant="warning" />
-          <MetricCard title="Remaining Orders" value={shipmentsData?.metrics?.remainingCount || 0} icon={Package} />
+          <MetricCard title="Shipping Cost" value={`₹${analytics.totalShippingCost.toFixed(0)}`} icon={Package} variant="warning" />
+          <MetricCard title="Ad Spend" value={`₹${analytics.totalAdSpend.toFixed(0)}`} icon={Target} variant="default" />
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-6 md:grid-cols-4 md:gap-4 md:mb-8">
-          <MetricCard title="RTO %" value={`${analytics.rtoPercentage.toFixed(1)}%`} icon={TrendingDown} variant="destructive" />
+          <MetricCard title="Out for Delivery" value={analytics.outForDeliveryCount} icon={Truck} variant="success" />
           <MetricCard title="Total Orders" value={analytics.totalOrders} icon={ShoppingCart} />
-          <MetricCard title="Total Spend" value={`₹${analytics.totalAdSpend.toFixed(0)}`} icon={DollarSign} />
-          <MetricCard title="AOV" value={`₹${analytics.aov.toFixed(0)}`} icon={Package} />
+          <MetricCard title="RTO %" value={`${analytics.rtoPercentage.toFixed(1)}%`} icon={TrendingDown} variant="destructive" />
+          <MetricCard title="AOV" value={`₹${analytics.aov.toFixed(0)}`} icon={DollarSign} />
         </div>
 
         {/* Charts Row 1 */}

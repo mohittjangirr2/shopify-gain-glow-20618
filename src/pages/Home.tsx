@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, TrendingUp, Package, Users, BarChart3, Shield, Zap } from "lucide-react";
+import { CheckCircle, TrendingUp, Package, Users, BarChart3, Shield, Zap, Clock, Headphones } from "lucide-react";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -50,6 +52,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       <section className="relative py-20 px-4 bg-gradient-to-b from-primary/5 to-background">
         <div className="container mx-auto text-center max-w-4xl">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -228,6 +231,120 @@ const Home = () => {
         </div>
       </section>
 
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Advanced Features</h2>
+            <p className="text-xl text-muted-foreground">
+              Powerful tools to manage every aspect of your business
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="border-2 hover:border-primary transition-colors">
+              <CardHeader>
+                <Clock className="h-12 w-12 text-primary mb-4" />
+                <CardTitle>Real-time Tracking</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Monitor NDR, Out for Delivery, and RTO orders in real-time with instant notifications and detailed tracking.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2 hover:border-primary transition-colors">
+              <CardHeader>
+                <BarChart3 className="h-12 w-12 text-primary mb-4" />
+                <CardTitle>Profit Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Deep dive into product profitability, customer lifetime value, and ROI with comprehensive profit tracking.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2 hover:border-primary transition-colors">
+              <CardHeader>
+                <TrendingUp className="h-12 w-12 text-primary mb-4" />
+                <CardTitle>Smart Forecasting</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Predict future trends, identify growth opportunities, and make informed decisions with AI-powered insights.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">24/7 Support & Reliability</h2>
+            <p className="text-xl text-muted-foreground">
+              We're here to help you succeed every step of the way
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="border-2">
+              <CardHeader>
+                <Headphones className="h-12 w-12 text-primary mb-4" />
+                <CardTitle>Dedicated Support Team</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-muted-foreground">
+                  Our expert support team is available 24/7 to help you with any questions or issues.
+                </p>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span>Live chat support</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span>Email support within 2 hours</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span>Video tutorials and guides</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2">
+              <CardHeader>
+                <Shield className="h-12 w-12 text-primary mb-4" />
+                <CardTitle>Enterprise-Grade Security</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-muted-foreground">
+                  Your data is protected with bank-level security and encrypted storage.
+                </p>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span>256-bit SSL encryption</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span>Regular security audits</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span>99.9% uptime guarantee</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 px-4 bg-gradient-to-t from-primary/5 to-background">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Get Started?</h2>
@@ -239,6 +356,8 @@ const Home = () => {
           </Button>
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 };

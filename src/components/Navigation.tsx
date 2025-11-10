@@ -35,6 +35,7 @@ const Navigation = () => {
   const navItems = [
     { to: "/dashboard", label: "Dashboard", icon: Home },
     { to: "/rto", label: "RTO", icon: TrendingDown },
+    { to: "/ndr", label: "NDR", icon: Package },
     { to: "/delivered", label: "Delivered", icon: Package },
     { to: "/products", label: "Products", icon: Package },
     { to: "/customers", label: "Customers", icon: Users },
