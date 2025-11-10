@@ -14,75 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      api_settings: {
-        Row: {
-          cod_remittance_fee: number | null
-          created_at: string | null
-          facebook_access_token: string | null
-          facebook_ad_account_id: string | null
-          facebook_app_id: string | null
-          facebook_app_secret: string | null
-          footer_names: string | null
-          footer_text: string | null
-          id: string
-          marketer_enabled: boolean | null
-          marketer_type: string | null
-          marketer_value: number | null
-          payment_gateway_enabled: boolean | null
-          payment_gateway_fee: number | null
-          shiprocket_email: string | null
-          shiprocket_password: string | null
-          shopify_access_token: string | null
-          shopify_store_url: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          cod_remittance_fee?: number | null
-          created_at?: string | null
-          facebook_access_token?: string | null
-          facebook_ad_account_id?: string | null
-          facebook_app_id?: string | null
-          facebook_app_secret?: string | null
-          footer_names?: string | null
-          footer_text?: string | null
-          id?: string
-          marketer_enabled?: boolean | null
-          marketer_type?: string | null
-          marketer_value?: number | null
-          payment_gateway_enabled?: boolean | null
-          payment_gateway_fee?: number | null
-          shiprocket_email?: string | null
-          shiprocket_password?: string | null
-          shopify_access_token?: string | null
-          shopify_store_url?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          cod_remittance_fee?: number | null
-          created_at?: string | null
-          facebook_access_token?: string | null
-          facebook_ad_account_id?: string | null
-          facebook_app_id?: string | null
-          facebook_app_secret?: string | null
-          footer_names?: string | null
-          footer_text?: string | null
-          id?: string
-          marketer_enabled?: boolean | null
-          marketer_type?: string | null
-          marketer_value?: number | null
-          payment_gateway_enabled?: boolean | null
-          payment_gateway_fee?: number | null
-          shiprocket_email?: string | null
-          shiprocket_password?: string | null
-          shopify_access_token?: string | null
-          shopify_store_url?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never

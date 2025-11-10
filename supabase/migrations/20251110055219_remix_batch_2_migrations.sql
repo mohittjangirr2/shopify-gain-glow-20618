@@ -1,4 +1,6 @@
 
+-- Migration: 20251110035633
+
 -- Migration: 20251110032136
 -- Create API settings table
 CREATE TABLE IF NOT EXISTS public.api_settings (
@@ -97,3 +99,8 @@ CREATE TRIGGER api_settings_updated_at
 ALTER TABLE public.api_settings
 ADD COLUMN IF NOT EXISTS footer_text TEXT DEFAULT 'Built with 💪 by',
 ADD COLUMN IF NOT EXISTS footer_names TEXT DEFAULT 'Mohit Jangir & Jainendra Bhati';
+
+
+-- Migration: 20251110043638
+-- Trigger types regeneration by adding a comment
+COMMENT ON TABLE public.api_settings IS 'Stores API configuration and credentials for each user';
