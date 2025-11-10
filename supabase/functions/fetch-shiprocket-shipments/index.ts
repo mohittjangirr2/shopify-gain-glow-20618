@@ -189,22 +189,22 @@ serve(async (req) => {
       return {
         id: shipment.id?.toString() || null,
         orderId: shipment.order_id?.toString() || null,
-        orderNumber: shopifyOrderName || shipment.channel_order_id || shipment.order_id?.toString() || 'N/A',
-        awb: shipment.awb_code || shipment.awb || 'N/A',
-        courier: shipment.courier_name || shipment.courier_company_id || 'N/A',
+        orderNumber: shopifyOrderName || shipment.channel_order_id || shipment.order_id?.toString() || 'Unknown Order',
+        awb: shipment.awb_code || shipment.awb || 'Pending AWB',
+        courier: shipment.courier_name || shipment.courier_company_id || 'Courier Not Assigned',
         
         // Customer details - improved extraction
-        customerName: shipment.customer_name || matchingOrder?.customer_name || 'N/A',
-        customerEmail: shipment.customer_email || matchingOrder?.customer_email || 'N/A',
-        customerPhone: shipment.customer_phone || matchingOrder?.customer_phone || matchingOrder?.customer_mobile || shipment.customer_alternate_phone || 'N/A',
-        customerAddress: shipment.customer_address || matchingOrder?.customer_address || shipment.pickup_location || 'N/A',
-        customerCity: shipment.customer_city || matchingOrder?.customer_city || 'N/A',
-        customerState: shipment.customer_state || matchingOrder?.customer_state || 'N/A',
-        customerPincode: shipment.customer_pincode || matchingOrder?.customer_pincode || 'N/A',
+        customerName: shipment.customer_name || matchingOrder?.customer_name || 'Unknown Customer',
+        customerEmail: shipment.customer_email || matchingOrder?.customer_email || 'No Email',
+        customerPhone: shipment.customer_phone || matchingOrder?.customer_phone || matchingOrder?.customer_mobile || shipment.customer_alternate_phone || 'No Phone',
+        customerAddress: shipment.customer_address || matchingOrder?.customer_address || shipment.pickup_location || 'No Address',
+        customerCity: shipment.customer_city || matchingOrder?.customer_city || 'Unknown City',
+        customerState: shipment.customer_state || matchingOrder?.customer_state || 'Unknown State',
+        customerPincode: shipment.customer_pincode || matchingOrder?.customer_pincode || 'No Pincode',
         
         // Shipping details
-        weight: shipment.weight || shipment.volumetric_weight || shipment.applied_weight || 'N/A',
-        dimensions: shipment.dimensions || (shipment.length && shipment.breadth && shipment.height ? `${shipment.length}x${shipment.breadth}x${shipment.height}` : 'N/A'),
+        weight: shipment.weight || shipment.volumetric_weight || shipment.applied_weight || '0 kg',
+        dimensions: shipment.dimensions || (shipment.length && shipment.breadth && shipment.height ? `${shipment.length}x${shipment.breadth}x${shipment.height}` : 'Not Measured'),
         
         // Costs and charges - directly from shipment.charges with better parsing
         shippingCharge: (() => {
@@ -230,12 +230,12 @@ serve(async (req) => {
         awbAssignDate: shipment.awb_assign_date || null,
         
         // Additional details
-        paymentMethod: shipment.payment_method || 'N/A',
-        pickupLocation: shipment.pickup_location || 'N/A',
-        etd: shipment.etd || shipment.expected_delivery_date || 'N/A',
-        invoiceNo: shipment.invoice_number || 'N/A',
-        brandName: shipment.company_name || 'N/A',
-        rtoReason: shipment.rto_reason || 'N/A',
+        paymentMethod: shipment.payment_method || 'Unknown',
+        pickupLocation: shipment.pickup_location || 'Unknown Location',
+        etd: shipment.etd || shipment.expected_delivery_date || 'Not Available',
+        invoiceNo: shipment.invoice_number || 'No Invoice',
+        brandName: shipment.company_name || 'Unknown Brand',
+        rtoReason: shipment.rto_reason || 'Unknown Reason',
         
         // Delivery details
         pickupBoyName: shipment.pickup_generated_by || null,

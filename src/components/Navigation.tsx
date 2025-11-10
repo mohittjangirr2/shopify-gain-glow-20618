@@ -2,7 +2,7 @@ import { NavLink } from "@/components/NavLink";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Home, Package, TrendingDown, Settings, Menu, LogOut, LogIn, Users } from "lucide-react";
+import { Home, Package, TrendingDown, Settings, Menu, LogOut, LogIn, Users, DollarSign } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,7 @@ const Navigation = () => {
     { to: "/rto", label: "RTO", icon: TrendingDown },
     { to: "/products", label: "Products", icon: Package },
     { to: "/customers", label: "Customers", icon: Users },
+    { to: "/cod-remittance", label: "COD Remittance", icon: DollarSign },
     { to: "/settings", label: "Settings", icon: Settings },
   ];
 

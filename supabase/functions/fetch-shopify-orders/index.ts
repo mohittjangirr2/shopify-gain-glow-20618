@@ -101,26 +101,63 @@ serve(async (req) => {
       );
     }
 
+    // Fetch cost prices for all variants in parallel
+    const variantIds = allOrders.flatMap(order => 
+      (order.line_items || []).map((item: any) => item.variant_id)
+    ).filter(Boolean);
+    
+    const uniqueVariantIds = [...new Set(variantIds)];
+    const variantCosts = new Map();
+    
+    // Fetch inventory items for cost data
+    for (const variantId of uniqueVariantIds) {
+      try {
+        const variantResponse = await fetch(
+          `https://${storeUrl}/admin/api/2025-01/variants/${variantId}.json`,
+          {
+            headers: {
+              'X-Shopify-Access-Token': accessToken,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (variantResponse.ok) {
+          const variantData = await variantResponse.json();
+          const inventoryItemId = variantData.variant?.inventory_item_id;
+          
+          if (inventoryItemId) {
+            const inventoryResponse = await fetch(
+              `https://${storeUrl}/admin/api/2025-01/inventory_items/${inventoryItemId}.json`,
+              {
+                headers: {
+                  'X-Shopify-Access-Token': accessToken,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+            
+            if (inventoryResponse.ok) {
+              const inventoryData = await inventoryResponse.json();
+              const cost = parseFloat(inventoryData.inventory_item?.cost || '0');
+              variantCosts.set(variantId, cost);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching cost for variant ${variantId}:`, error);
+      }
+    }
+
     // Format orders with all required fields including cost price from Shopify
     const formattedOrders = allOrders.map(order => {
       const lineItems = order.line_items || [];
       const firstItem = lineItems[0] || {};
       
-      // Get actual cost price from Shopify line items (if available in properties or variant data)
+      // Calculate total cost using fetched variant costs
       const totalCost = lineItems.reduce((sum: number, item: any) => {
-        // Try to get actual cost from item properties or variant
-        let itemCost = 0;
-        
-        // Check if cost is in properties
-        if (item.properties) {
-          const costProp = item.properties.find((p: any) => p.name?.toLowerCase() === 'cost' || p.name?.toLowerCase() === 'cost_price');
-          if (costProp) {
-            itemCost = parseFloat(costProp.value || '0');
-          }
-        }
-        
-        // If no cost found, leave as 0 (don't calculate)
-        return sum + (itemCost * (item.quantity || 1));
+        const variantCost = variantCosts.get(item.variant_id) || 0;
+        return sum + (variantCost * (item.quantity || 1));
       }, 0);
       
       return {
@@ -133,7 +170,7 @@ serve(async (req) => {
           ? `${order.customer.first_name} ${order.customer.last_name}` 
           : order.customer?.first_name || order.customer?.last_name || null,
         email: order.customer?.email || null,
-        phone: order.customer?.phone || order.customer?.default_address?.phone || order.shipping_address?.phone || order.billing_address?.phone || 'N/A',
+        phone: order.customer?.phone || order.customer?.default_address?.phone || order.shipping_address?.phone || order.billing_address?.phone || order.contact_email || 'No Phone',
         orderValue: parseFloat(order.total_price || '0'),
         costPrice: totalCost,
         profit: parseFloat(order.total_price || '0') - totalCost,
@@ -164,22 +201,15 @@ serve(async (req) => {
         
         // All line items for detailed view
         lineItems: lineItems.map((item: any) => {
-          // Try to get cost from properties
-          let itemCost = null;
-          if (item.properties) {
-            const costProp = item.properties.find((p: any) => p.name?.toLowerCase() === 'cost' || p.name?.toLowerCase() === 'cost_price');
-            if (costProp) {
-              itemCost = parseFloat(costProp.value || '0');
-            }
-          }
+          const itemCost = variantCosts.get(item.variant_id) || 0;
           
           return {
             name: item.name,
             quantity: item.quantity,
             price: item.price,
             cost: itemCost,
-            vendor: item.vendor,
-            sku: item.sku,
+            vendor: item.vendor || 'Unknown',
+            sku: item.sku || 'No SKU',
           };
         }),
       };

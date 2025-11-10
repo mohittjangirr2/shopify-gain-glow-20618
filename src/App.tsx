@@ -10,6 +10,7 @@ import Settings from "./pages/Settings";
 import RTO from "./pages/RTO";
 import Products from "./pages/Products";
 import Customers from "./pages/Customers";
+import CODRemittance from "./pages/CODRemittance";
 import Auth from "./pages/Auth";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
@@ -56,6 +57,13 @@ const App = () => (
             <ProtectedRoute>
               <Navigation />
               <Customers />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/cod-remittance" element={
+            <ProtectedRoute>
+              <Navigation />
+              <CODRemittance />
               <Footer />
             </ProtectedRoute>
           } />
