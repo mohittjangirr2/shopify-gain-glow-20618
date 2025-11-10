@@ -136,7 +136,7 @@ serve(async (req) => {
     
     const ordersMap = new Map(allOrders.map((order: any) => [order.id, order]));
     
-    // Filter shipments by date range
+    // Filter shipments by date range - using order data for more reliable dates
     let filteredShipments = allShipments;
     if (dateRange) {
       const now = new Date();
@@ -149,8 +149,25 @@ serve(async (req) => {
       }
       
       filteredShipments = allShipments.filter((shipment: any) => {
-        const shipmentDate = shipment.pickup_scheduled_date || shipment.awb_assign_date || shipment.created_at;
-        return shipmentDate && new Date(shipmentDate) >= filterDate;
+        // Get the matching order for better date info
+        const matchingOrder: any = ordersMap.get(shipment.order_id);
+        
+        // Try multiple date sources
+        let shipmentDateStr = matchingOrder?.created_at || shipment.created_at || shipment.pickup_scheduled_date || shipment.awb_assign_date;
+        
+        if (!shipmentDateStr || shipmentDateStr === '0000-00-00 00:00:00') {
+          return true; // Include shipments with no valid date
+        }
+        
+        // Parse the date - handle both ISO and formatted dates
+        const shipmentDate = new Date(shipmentDateStr);
+        
+        // Check if date is valid
+        if (isNaN(shipmentDate.getTime())) {
+          return true; // Include shipments with unparseable dates
+        }
+        
+        return shipmentDate >= filterDate;
       });
     }
     
