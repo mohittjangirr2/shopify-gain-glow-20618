@@ -15,13 +15,16 @@ const Footer = () => {
       if (!user) return;
 
       const { data, error } = await supabase
+        // @ts-expect-error - Table types regenerating after remix
         .from('api_settings')
         .select('footer_text, footer_names')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (data && !error) {
+        // @ts-ignore
         setFooterText(data.footer_text || "Powered by");
+        // @ts-ignore
         setFooterNames(data.footer_names || "OVIX Analytics");
       }
     } catch (error) {

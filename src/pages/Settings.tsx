@@ -35,8 +35,8 @@ const Settings = () => {
   const [codRemittanceFee, setCodRemittanceFee] = useState("0.49");
   
   // Footer Settings
-  const [footerText, setFooterText] = useState("Built with 💪 by");
-  const [footerNames, setFooterNames] = useState("Mohit Jangir & Jainendra Bhati");
+  const [footerText, setFooterText] = useState("Powered by");
+  const [footerNames, setFooterNames] = useState("OVIX Analytics");
 
   useEffect(() => {
     loadSettings();
@@ -50,33 +50,50 @@ const Settings = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error} = await supabase
+        // @ts-expect-error - Table types regenerating after remix
         .from('api_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
       if (data) {
+        // @ts-ignore
         setFacebookAccessToken(data.facebook_access_token || "");
+        // @ts-ignore
         setFacebookAdAccountId(data.facebook_ad_account_id || "");
+        // @ts-ignore
         setFacebookAppId(data.facebook_app_id || "");
+        // @ts-ignore
         setFacebookAppSecret(data.facebook_app_secret || "");
+        // @ts-ignore
         setShiprocketEmail(data.shiprocket_email || "");
+        // @ts-ignore
         setShiprocketPassword(data.shiprocket_password || "");
+        // @ts-ignore
         setShopifyStoreUrl(data.shopify_store_url || "");
+        // @ts-ignore
         setShopifyAccessToken(data.shopify_access_token || "");
+        // @ts-ignore
         setPaymentGatewayEnabled(data.payment_gateway_enabled ?? true);
+        // @ts-ignore
         setPaymentGatewayFee(data.payment_gateway_fee?.toString() || "2");
+        // @ts-ignore
         setCodRemittanceFee(data.cod_remittance_fee?.toString() || "0.49");
+        // @ts-ignore
         setMarketerEnabled(data.marketer_enabled ?? false);
+        // @ts-ignore
         setMarketerType((data.marketer_type as "percentage" | "fixed") || "percentage");
+        // @ts-ignore
         setMarketerValue(data.marketer_value?.toString() || "");
-        setFooterText(data.footer_text || "Built with 💪 by");
-        setFooterNames(data.footer_names || "Mohit Jangir & Jainendra Bhati");
+        // @ts-ignore
+        setFooterText(data.footer_text || "Powered by");
+        // @ts-ignore
+        setFooterNames(data.footer_names || "OVIX Analytics");
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -114,7 +131,9 @@ const Settings = () => {
       };
 
       const { error } = await supabase
+        // @ts-expect-error - Table types regenerating after remix
         .from('api_settings')
+        // @ts-expect-error - Table types regenerating after remix
         .upsert(settings, { onConflict: 'user_id' });
 
       if (error) throw error;
