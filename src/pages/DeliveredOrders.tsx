@@ -32,10 +32,10 @@ const DeliveredOrders = () => {
 
     const totalDelivered = deliveredShipments.length;
     const totalRevenue = deliveredShipments.reduce((sum: number, s: any) => 
-      sum + (s.orderValue || 0), 0
+      sum + (parseFloat(s.orderValue) || 0), 0
     );
     const totalShippingCost = deliveredShipments.reduce((sum: number, s: any) => 
-      sum + (s.shippingCharge || 0), 0
+      sum + (parseFloat(s.shippingCharge) || 0), 0
     );
 
     return {
@@ -52,8 +52,8 @@ const DeliveredOrders = () => {
     { header: "Customer", accessor: "customerName", cell: (v: string | null) => v || "-" },
     { header: "State", accessor: "customerState", cell: (v: string | null) => v || "-" },
     { header: "Status", accessor: "status", cell: (v: string | null) => v ? <StatusBadge status={v} /> : "-" },
-    { header: "Order Value", accessor: "orderValue", cell: (v: number) => `₹${v.toFixed(2)}` },
-    { header: "Shipping Cost", accessor: "shippingCharge", cell: (v: number) => `₹${v.toFixed(2)}` },
+    { header: "Order Value", accessor: "orderValue", cell: (v: any) => v ? `₹${parseFloat(v).toFixed(2)}` : "-" },
+    { header: "Shipping Cost", accessor: "shippingCharge", cell: (v: any) => v ? `₹${parseFloat(v).toFixed(2)}` : "-" },
     { header: "Delivered Date", accessor: "deliveredDate", cell: (v: string | null) => 
       v ? new Date(v).toLocaleDateString() : "-" 
     },
@@ -83,13 +83,13 @@ const DeliveredOrders = () => {
           />
           <MetricCard
             title="Total Revenue"
-            value={`₹${deliveredMetrics?.totalRevenue.toFixed(2) || 0}`}
+            value={`₹${(deliveredMetrics?.totalRevenue || 0).toFixed(2)}`}
             icon={TrendingUp}
             variant="success"
           />
           <MetricCard
             title="Shipping Cost"
-            value={`₹${deliveredMetrics?.totalShippingCost.toFixed(2) || 0}`}
+            value={`₹${(deliveredMetrics?.totalShippingCost || 0).toFixed(2)}`}
             icon={Package}
           />
         </div>
