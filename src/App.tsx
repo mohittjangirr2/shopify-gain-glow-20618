@@ -13,6 +13,8 @@ import Products from "./pages/Products";
 import Customers from "./pages/Customers";
 import DeliveredOrders from "./pages/DeliveredOrders";
 import VendorPayments from "./pages/VendorPayments";
+import NotificationSettings from "./pages/NotificationSettings";
+import PerformanceDoc from "./pages/PerformanceDoc";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Navigation from "./components/Navigation";
@@ -68,6 +70,20 @@ const App = () => (
             <ProtectedRoute>
               <Navigation />
               <Settings />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <Navigation />
+              <NotificationSettings />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/performance" element={
+            <ProtectedRoute>
+              <Navigation />
+              <PerformanceDoc />
               <Footer />
             </ProtectedRoute>
           } />

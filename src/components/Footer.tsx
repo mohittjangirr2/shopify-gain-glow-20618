@@ -15,7 +15,6 @@ const Footer = () => {
       if (!user) return;
 
       const { data, error } = await supabase
-        // @ts-expect-error - Table types regenerating after remix
         .from('api_settings')
         .select('footer_text, footer_names')
         .eq('user_id', user.id)

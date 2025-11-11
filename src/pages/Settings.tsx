@@ -51,7 +51,6 @@ const Settings = () => {
       }
 
       const { data, error} = await supabase
-        // @ts-expect-error - Table types regenerating after remix
         .from('api_settings')
         .select('*')
         .eq('user_id', user.id)
@@ -131,9 +130,7 @@ const Settings = () => {
       };
 
       const { error } = await supabase
-        // @ts-expect-error - Table types regenerating after remix
         .from('api_settings')
-        // @ts-expect-error - Table types regenerating after remix
         .upsert(settings, { onConflict: 'user_id' });
 
       if (error) throw error;

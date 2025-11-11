@@ -14,13 +14,180 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      api_cache: {
+        Row: {
+          cache_data: Json
+          cache_key: string
+          cached_at: string | null
+          created_at: string | null
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          cache_data: Json
+          cache_key: string
+          cached_at?: string | null
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          cache_data?: Json
+          cache_key?: string
+          cached_at?: string | null
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      api_settings: {
+        Row: {
+          cod_remittance_fee: number | null
+          created_at: string | null
+          facebook_access_token: string | null
+          facebook_ad_account_id: string | null
+          facebook_app_id: string | null
+          facebook_app_secret: string | null
+          footer_names: string | null
+          footer_text: string | null
+          id: string
+          marketer_enabled: boolean | null
+          marketer_type: string | null
+          marketer_value: number | null
+          payment_gateway_enabled: boolean | null
+          payment_gateway_fee: number | null
+          shiprocket_email: string | null
+          shiprocket_password: string | null
+          shopify_access_token: string | null
+          shopify_store_url: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cod_remittance_fee?: number | null
+          created_at?: string | null
+          facebook_access_token?: string | null
+          facebook_ad_account_id?: string | null
+          facebook_app_id?: string | null
+          facebook_app_secret?: string | null
+          footer_names?: string | null
+          footer_text?: string | null
+          id?: string
+          marketer_enabled?: boolean | null
+          marketer_type?: string | null
+          marketer_value?: number | null
+          payment_gateway_enabled?: boolean | null
+          payment_gateway_fee?: number | null
+          shiprocket_email?: string | null
+          shiprocket_password?: string | null
+          shopify_access_token?: string | null
+          shopify_store_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cod_remittance_fee?: number | null
+          created_at?: string | null
+          facebook_access_token?: string | null
+          facebook_ad_account_id?: string | null
+          facebook_app_id?: string | null
+          facebook_app_secret?: string | null
+          footer_names?: string | null
+          footer_text?: string | null
+          id?: string
+          marketer_enabled?: boolean | null
+          marketer_type?: string | null
+          marketer_value?: number | null
+          payment_gateway_enabled?: boolean | null
+          payment_gateway_fee?: number | null
+          shiprocket_email?: string | null
+          shiprocket_password?: string | null
+          shopify_access_token?: string | null
+          shopify_store_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      fcm_config: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          firebase_project_id: string | null
+          firebase_sender_id: string | null
+          firebase_server_key: string | null
+          firebase_service_account: Json | null
+          firebase_vapid_key: string | null
+          id: string
+          notification_sound_url: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          firebase_project_id?: string | null
+          firebase_sender_id?: string | null
+          firebase_server_key?: string | null
+          firebase_service_account?: Json | null
+          firebase_vapid_key?: string | null
+          id?: string
+          notification_sound_url?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          firebase_project_id?: string | null
+          firebase_sender_id?: string | null
+          firebase_server_key?: string | null
+          firebase_service_account?: Json | null
+          firebase_vapid_key?: string | null
+          id?: string
+          notification_sound_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json
+          event_type: string
+          id: string
+          notification_sent: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_data: Json
+          event_type: string
+          id?: string
+          notification_sent?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json
+          event_type?: string
+          id?: string
+          notification_sent?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      clean_expired_cache: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
