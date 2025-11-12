@@ -311,8 +311,8 @@ serve(async (req) => {
     );
     const ndrCount = ndrShipments.length;
     
-    // RTO percentage based on delivered orders only (excluding NDR)
-    const rtoPercentage = deliveredCount > 0 ? (rtoCount / deliveredCount) * 100 : 0;
+    // RTO percentage: RTO / (Delivered + RTO)
+    const rtoPercentage = (deliveredCount + rtoCount) > 0 ? (rtoCount / (deliveredCount + rtoCount)) * 100 : 0;
     const deliveredPercentage = totalShipments > 0 ? (deliveredCount / totalShipments) * 100 : 0;
 
     // Out for delivery count
