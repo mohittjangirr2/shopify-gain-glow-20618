@@ -87,8 +87,21 @@ serve(async (req) => {
 
       if (walletResponse.ok) {
         const walletData = await walletResponse.json();
-        walletBalance = parseFloat(walletData.data?.balance || '0');
-        console.log('Wallet balance fetched:', walletBalance);
+        console.log('Wallet API response:', JSON.stringify(walletData, null, 2));
+        
+        // Try different possible balance field names
+        const balance = walletData.data?.balance 
+          || walletData.balance 
+          || walletData.data?.wallet_balance
+          || walletData.wallet_balance
+          || walletData.data?.available_balance
+          || 0;
+        
+        walletBalance = parseFloat(balance);
+        console.log('Parsed wallet balance:', walletBalance);
+      } else {
+        const errorText = await walletResponse.text();
+        console.error('Wallet balance API error:', errorText);
       }
     } catch (e) {
       console.error('Error fetching wallet balance:', e);

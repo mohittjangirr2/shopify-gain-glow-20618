@@ -139,9 +139,35 @@ const Index = () => {
   // Calculate analytics with fee calculations
   const analytics = useMemo(() => {
     const settings = getDefaultSettings();
-    const totalRevenue = ordersData?.orders?.reduce((sum: number, order: any) => sum + order.orderValue, 0) || 0;
-    const totalCost = ordersData?.orders?.reduce((sum: number, order: any) => sum + (order.costPrice || 0), 0) || 0;
-    const totalOrders = ordersData?.total || 0;
+    
+    // Merge Shopify orders with Shiprocket customer data
+    const shipments = shipmentsData?.shipments || [];
+    const enrichedOrders = (ordersData?.orders || []).map((order: any) => {
+      // Find matching shipment by order number or order ID
+      const matchingShipment = shipments.find((s: any) => 
+        s.orderNumber === order.orderName || 
+        s.orderNumber === order.orderNumber ||
+        s.orderId === order.id ||
+        s.orderNumber === order.name
+      );
+      
+      // Use Shiprocket customer data if available
+      if (matchingShipment) {
+        return {
+          ...order,
+          customerName: matchingShipment.customerName || order.customerName,
+          phone: matchingShipment.customerPhone || order.phone,
+          customerAddress: matchingShipment.customerAddress || order.customerAddress,
+          customerCity: matchingShipment.customerCity || order.city,
+          customerState: matchingShipment.customerState || order.province,
+        };
+      }
+      return order;
+    });
+    
+    const totalRevenue = enrichedOrders.reduce((sum: number, order: any) => sum + order.orderValue, 0);
+    const totalCost = enrichedOrders.reduce((sum: number, order: any) => sum + (order.costPrice || 0), 0);
+    const totalOrders = enrichedOrders.length;
     const totalAdSpend = adsData?.totalSpend || 0;
     const totalShippingCost = shipmentsData?.metrics?.totalShippingCost || 0;
     const rtoCount = shipmentsData?.metrics?.rtoCount || 0;
@@ -154,7 +180,7 @@ const Index = () => {
 
     // Build set of delivered order IDs from shipments
     const deliveredOrderIds = new Set<string>();
-    shipmentsData?.shipments?.forEach((shipment: any) => {
+    shipments.forEach((shipment: any) => {
       if (shipment.status?.toLowerCase() === 'delivered') {
         if (shipment.orderNumber) deliveredOrderIds.add(shipment.orderNumber);
         if (shipment.orderId) deliveredOrderIds.add(shipment.orderId);
@@ -162,17 +188,17 @@ const Index = () => {
     });
 
     // Calculate fees based on settings and delivered orders
-    const { totalFees, breakdown } = calculateTotalFees(ordersData?.orders || [], settings, deliveredOrderIds);
+    const { totalFees, breakdown } = calculateTotalFees(enrichedOrders, settings, deliveredOrderIds);
     
     // Calculate RTO revenue loss (orders that were RTO'd)
-    const rtoOrders = shipmentsData?.shipments?.filter((s: any) => {
+    const rtoOrders = shipments.filter((s: any) => {
       const status = s.status?.toLowerCase() || '';
       const rtoStatus = s.rtoStatus?.toLowerCase() || '';
       return (status.includes('rto') || rtoStatus.includes('rto')) && !status.includes('ndr');
-    }) || [];
+    });
     
     const rtoRevenueLoss = rtoOrders.reduce((sum: number, shipment: any) => {
-      const matchingOrder = ordersData?.orders?.find((o: any) => 
+      const matchingOrder = enrichedOrders.find((o: any) => 
         o.orderNumber === shipment.orderNumber || o.orderId === shipment.orderId
       );
       return sum + (matchingOrder?.orderValue || 0);
@@ -201,15 +227,16 @@ const Index = () => {
       totalProfit,
       roi,
       aov,
+      enrichedOrders, // Return enriched orders for table display
     };
   }, [ordersData, adsData, shipmentsData]);
 
-  // Best selling products
+  // Best selling products - use enriched orders
   const bestSellers = useMemo(() => {
-    if (!ordersData?.orders) return [];
+    if (!analytics.enrichedOrders) return [];
     
     const productMap = new Map();
-    ordersData.orders.forEach((order: any) => {
+    analytics.enrichedOrders.forEach((order: any) => {
       if (!order.product) return;
       
       const existing = productMap.get(order.product) || {
@@ -233,7 +260,7 @@ const Index = () => {
       .map(p => ({ ...p, profit: p.revenue - p.cost }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
-  }, [ordersData]);
+  }, [analytics.enrichedOrders]);
   const columns = [
     { header: "Order Name", accessor: "name", cell: (v: string | null) => v || "N/A" },
     { header: "Customer", accessor: "customerName", cell: (v: string | null) => v || "N/A" },
@@ -246,12 +273,12 @@ const Index = () => {
     { header: "Fulfillment", accessor: "fulfillmentStatus", cell: (v: string | null) => v ? <StatusBadge status={v} /> : "N/A" },
   ];
 
-  // Daily profit tracking
+  // Daily profit tracking - use enriched orders
   const dailyProfitData = useMemo(() => {
-    if (!ordersData?.orders) return [];
+    if (!analytics.enrichedOrders) return [];
     
     const dailyMap = new Map();
-    ordersData.orders.forEach((order: any) => {
+    analytics.enrichedOrders.forEach((order: any) => {
       const date = new Date(order.createdAt).toLocaleDateString();
       const existing = dailyMap.get(date) || { date, revenue: 0, cost: 0, orders: 0 };
       
@@ -267,7 +294,7 @@ const Index = () => {
       .map(d => ({ ...d, profit: d.revenue - d.cost }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(-30); // Last 30 days
-  }, [ordersData]);
+  }, [analytics.enrichedOrders]);
 
   // Updated columns - remove null values and make orders clickable
   const ordersColumns = [
@@ -322,7 +349,7 @@ const Index = () => {
     { header: "Brand", accessor: "brandName", cell: (v: string | null) => v || "-" },
   ];
 
-  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
+  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -549,7 +576,7 @@ const Index = () => {
               <CardContent className="p-0 md:p-6">
                 <AdvancedDataTable 
                   columns={ordersColumns} 
-                  data={ordersData?.orders || []} 
+                  data={analytics.enrichedOrders || []} 
                   isLoading={ordersLoading}
                   searchable
                   onRowClick={(row) => {
