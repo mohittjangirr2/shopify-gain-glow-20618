@@ -20,7 +20,8 @@ import {
   Truck,
   Target,
   Calendar,
-  TrendingDown
+  TrendingDown,
+  Wallet
 } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -372,12 +373,13 @@ const Index = () => {
           <MetricCard title="Ad Spend" value={`₹${analytics.totalAdSpend.toFixed(0)}`} icon={Target} variant="default" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6 md:grid-cols-5 md:gap-4 md:mb-8">
+        <div className="grid grid-cols-2 gap-3 mb-6 md:grid-cols-6 md:gap-4 md:mb-8">
           <MetricCard title="Out for Delivery" value={analytics.outForDeliveryCount} icon={Truck} variant="success" />
-          <MetricCard title="Total Orders" value={analytics.totalOrders} icon={ShoppingCart} />
-          <MetricCard title="RTO %" value={`${analytics.rtoPercentage.toFixed(1)}%`} icon={TrendingDown} variant="destructive" />
-          <MetricCard title="AOV" value={`₹${analytics.aov.toFixed(0)}`} icon={DollarSign} />
-          <MetricCard title="Wallet Balance" value={`₹${analytics.walletBalance.toFixed(0)}`} icon={DollarSign} variant="success" />
+          <MetricCard title="Delivered" value={analytics.deliveredCount} icon={ShoppingCart} variant="success" />
+          <MetricCard title="RTO" value={analytics.rtoCount} icon={TrendingDown} variant="destructive" />
+          <MetricCard title="RTO %" value={`${analytics.rtoPercentage.toFixed(1)}%`} icon={AlertCircle} variant="destructive" />
+          <MetricCard title="NDR" value={analytics.ndrCount} icon={Package} variant="warning" />
+          <MetricCard title="Wallet Balance" value={`₹${analytics.walletBalance.toFixed(0)}`} icon={Wallet} variant="default" />
         </div>
 
         {/* Charts Row 1 */}

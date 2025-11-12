@@ -15,6 +15,9 @@ import DeliveredOrders from "./pages/DeliveredOrders";
 import VendorPayments from "./pages/VendorPayments";
 import NotificationSettings from "./pages/NotificationSettings";
 import PerformanceDoc from "./pages/PerformanceDoc";
+import NewOrders from "./pages/NewOrders";
+import ReadyToShip from "./pages/ReadyToShip";
+import InTransit from "./pages/InTransit";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Navigation from "./components/Navigation";
@@ -84,6 +87,27 @@ const App = () => (
             <ProtectedRoute>
               <Navigation />
               <PerformanceDoc />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/orders/new" element={
+            <ProtectedRoute>
+              <Navigation />
+              <NewOrders />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/orders/ready-to-ship" element={
+            <ProtectedRoute>
+              <Navigation />
+              <ReadyToShip />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/orders/in-transit" element={
+            <ProtectedRoute>
+              <Navigation />
+              <InTransit />
               <Footer />
             </ProtectedRoute>
           } />

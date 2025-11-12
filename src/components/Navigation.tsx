@@ -22,6 +22,11 @@ import {
   LayoutDashboard,
   ChevronDown,
   DollarSign,
+  PackagePlus,
+  PackageCheck,
+  Truck as TruckIcon,
+  Zap,
+  Bell,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -57,6 +62,9 @@ const Navigation = () => {
   ];
 
   const ordersNavItems = [
+    { to: "/orders/new", label: "New Orders", icon: PackagePlus },
+    { to: "/orders/ready-to-ship", label: "Ready To Ship", icon: PackageCheck },
+    { to: "/orders/in-transit", label: "In Transit", icon: TruckIcon },
     { to: "/delivered", label: "Delivered", icon: CheckCircle },
     { to: "/rto", label: "RTO", icon: TrendingDown },
     { to: "/ndr", label: "NDR", icon: AlertCircle },
@@ -64,6 +72,8 @@ const Navigation = () => {
 
   const otherNavItems = [
     { to: "/vendor-payments", label: "Vendor Payments", icon: DollarSign },
+    { to: "/performance", label: "Performance", icon: Zap },
+    { to: "/notifications", label: "Notifications", icon: Bell },
     { to: "/settings", label: "Settings", icon: Settings },
   ];
 
