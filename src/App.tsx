@@ -22,6 +22,7 @@ import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
+import { SuperAdminPanel } from "./pages/SuperAdminPanel";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,13 @@ const App = () => (
             <ProtectedRoute>
               <Navigation />
               <Customers />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/super-admin" element={
+            <ProtectedRoute>
+              <Navigation />
+              <SuperAdminPanel />
               <Footer />
             </ProtectedRoute>
           } />
