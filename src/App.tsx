@@ -23,6 +23,7 @@ import Auth from "./pages/Auth";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
 import { SuperAdminPanel } from "./pages/SuperAdminPanel";
+import VendorDashboard from "./pages/VendorDashboard";
 
 const queryClient = new QueryClient();
 
@@ -130,6 +131,13 @@ const App = () => (
             <ProtectedRoute>
               <Navigation />
               <SuperAdminPanel />
+              <Footer />
+            </ProtectedRoute>
+          } />
+          <Route path="/vendor-dashboard" element={
+            <ProtectedRoute>
+              <Navigation />
+              <VendorDashboard />
               <Footer />
             </ProtectedRoute>
           } />
