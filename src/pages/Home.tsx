@@ -223,7 +223,7 @@ const Home = () => {
               </CardHeader>
               <CardContent className="space-y-3 font-mono text-sm">
                 <p><span className="text-success">GET</span> /fetch-shopify-orders <span className="text-muted-foreground">- Order data sync</span></p>
-                <p><span className="text-success">GET</span> /fetch-facebook-ads <span className="text-muted-foreground">- Ad spend metrics</span></p>
+                <p><span className="text-success">GET</span> /fetch-facebook-ads-v2 <span className="text-muted-foreground">- Ad spend with auto-refresh</span></p>
                 <p><span className="text-success">GET</span> /fetch-shiprocket-shipments <span className="text-muted-foreground">- Shipping data</span></p>
                 <p><span className="text-primary">→</span> All endpoints support date range filtering</p>
                 <p><span className="text-primary">→</span> Responses cached for performance optimization</p>
