@@ -55,7 +55,7 @@ const Index = () => {
     queryKey: ['facebook-ads', dateRange],
     queryFn: async () => {
       if (disabledApis.has('facebook')) throw new Error('Facebook API temporarily disabled');
-      const { data, error } = await supabase.functions.invoke('fetch-facebook-ads', {
+      const { data, error } = await supabase.functions.invoke('fetch-facebook-ads-v2', {
         body: { dateRange }
       });
       if (error) throw error;

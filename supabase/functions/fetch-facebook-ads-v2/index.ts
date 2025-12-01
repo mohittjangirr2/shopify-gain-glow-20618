@@ -97,6 +97,15 @@ serve(async (req) => {
     const data = await response.json();
 
     if (data.error) {
+      const errorCode = data.error.code;
+      const errorSubcode = data.error.error_subcode;
+      
+      // Check for expired token errors
+      if (errorCode === 190 && (errorSubcode === 463 || errorSubcode === 467)) {
+        console.error('Facebook access token has expired. Please update your token in Settings.');
+        throw new Error('Facebook access token expired. Please go to Settings → API Configuration and update your Facebook Access Token with a fresh token from Facebook Business Manager.');
+      }
+      
       throw new Error(data.error.message || 'Facebook API error');
     }
 
