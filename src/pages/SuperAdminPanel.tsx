@@ -7,16 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdvancedDataTable } from "@/components/AdvancedDataTable";
 import { toast } from "sonner";
-import { Building2, UserPlus, Settings } from "lucide-react";
+import { Building2, UserPlus, Settings, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 export const SuperAdminPanel = () => {
   const queryClient = useQueryClient();
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
   const [showModuleDialog, setShowModuleDialog] = useState(false);
+  const [showVendorDialog, setShowVendorDialog] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [companyForm, setCompanyForm] = useState({ name: '', email: '', phone: '' });
+  const [vendorForm, setVendorForm] = useState({ 
+    name: '', 
+    email: '', 
+    phone: '', 
+    password: '',
+    company_id: '',
+    cost_per_order: 0 
+  });
 
   // Fetch companies
   const { data: companies = [], isLoading: loadingCompanies } = useQuery({
@@ -25,6 +36,20 @@ export const SuperAdminPanel = () => {
       const { data, error } = await supabase
         .from('companies')
         .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch vendors
+  const { data: vendors = [], isLoading: loadingVendors } = useQuery({
+    queryKey: ['vendors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('*, companies(name)')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -80,6 +105,43 @@ export const SuperAdminPanel = () => {
     },
   });
 
+  // Create vendor mutation
+  const createVendor = useMutation({
+    mutationFn: async (newVendor: typeof vendorForm) => {
+      const { data, error } = await supabase.functions.invoke('create-vendor-user', {
+        body: { 
+          vendorData: {
+            name: newVendor.name,
+            email: newVendor.email,
+            phone: newVendor.phone,
+            company_id: newVendor.company_id,
+            cost_per_order: newVendor.cost_per_order,
+          },
+          password: newVendor.password 
+        }
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      toast.success('Vendor created successfully with login credentials');
+      setShowVendorDialog(false);
+      setVendorForm({ 
+        name: '', 
+        email: '', 
+        phone: '', 
+        password: '',
+        company_id: '',
+        cost_per_order: 0 
+      });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to create vendor: ${error.message}`);
+    },
+  });
+
   // Toggle module permission
   const toggleModulePermission = useMutation({
     mutationFn: async ({ moduleId, permission }: { moduleId: string; permission: keyof typeof permissions }) => {
@@ -116,9 +178,9 @@ export const SuperAdminPanel = () => {
       header: 'Status',
       accessor: 'is_active',
       cell: (row: any) => (
-        <span className={row.is_active ? 'text-green-600' : 'text-red-600'}>
+        <Badge variant={row.is_active ? 'default' : 'secondary'}>
           {row.is_active ? 'Active' : 'Inactive'}
-        </span>
+        </Badge>
       ),
     },
     {
@@ -140,31 +202,83 @@ export const SuperAdminPanel = () => {
     },
   ];
 
+  const vendorColumns = [
+    { header: 'Vendor Name', accessor: 'name' },
+    { header: 'Email', accessor: 'email' },
+    { header: 'Phone', accessor: 'phone', cell: (v: string) => v || 'N/A' },
+    { header: 'Company', accessor: 'companies', cell: (v: any) => v?.name || 'N/A' },
+    { header: 'Cost/Order', accessor: 'cost_per_order', cell: (v: number) => `₹${v?.toFixed(2) || '0.00'}` },
+    {
+      header: 'Status',
+      accessor: 'is_active',
+      cell: (row: any) => (
+        <Badge variant={row.is_active ? 'default' : 'secondary'}>
+          {row.is_active ? 'Active' : 'Inactive'}
+        </Badge>
+      ),
+    },
+  ];
+
   const permissions = { can_read: 'Read', can_write: 'Write', can_delete: 'Delete' };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Super Admin Panel</h1>
-        <Button onClick={() => setShowCompanyDialog(true)}>
-          <Building2 className="h-4 w-4 mr-2" />
-          Add Company
-        </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Companies Management</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AdvancedDataTable
-            columns={companyColumns}
-            data={companies}
-            isLoading={loadingCompanies}
-            searchable
-          />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="companies">
+        <TabsList>
+          <TabsTrigger value="companies">
+            <Building2 className="h-4 w-4 mr-2" />
+            Companies
+          </TabsTrigger>
+          <TabsTrigger value="vendors">
+            <Users className="h-4 w-4 mr-2" />
+            Vendors
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="companies">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Companies Management</CardTitle>
+              <Button onClick={() => setShowCompanyDialog(true)}>
+                <Building2 className="h-4 w-4 mr-2" />
+                Add Company
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <AdvancedDataTable
+                columns={companyColumns}
+                data={companies}
+                isLoading={loadingCompanies}
+                searchable
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="vendors">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Vendors Management</CardTitle>
+              <Button onClick={() => setShowVendorDialog(true)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Vendor
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <AdvancedDataTable
+                columns={vendorColumns}
+                data={vendors}
+                isLoading={loadingVendors}
+                searchable
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Create Company Dialog */}
       <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
@@ -204,6 +318,85 @@ export const SuperAdminPanel = () => {
               className="w-full"
             >
               Create Company
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Vendor Dialog */}
+      <Dialog open={showVendorDialog} onOpenChange={setShowVendorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Vendor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Vendor Name *</Label>
+              <Input
+                value={vendorForm.name}
+                onChange={(e) => setVendorForm({ ...vendorForm, name: e.target.value })}
+                placeholder="Enter vendor name"
+              />
+            </div>
+            <div>
+              <Label>Email * (Login Username)</Label>
+              <Input
+                type="email"
+                value={vendorForm.email}
+                onChange={(e) => setVendorForm({ ...vendorForm, email: e.target.value })}
+                placeholder="vendor@example.com"
+              />
+            </div>
+            <div>
+              <Label>Password * (Initial Login Password)</Label>
+              <Input
+                type="password"
+                value={vendorForm.password}
+                onChange={(e) => setVendorForm({ ...vendorForm, password: e.target.value })}
+                placeholder="Min 6 characters"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Vendor can change this after first login
+              </p>
+            </div>
+            <div>
+              <Label>Company *</Label>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={vendorForm.company_id}
+                onChange={(e) => setVendorForm({ ...vendorForm, company_id: e.target.value })}
+              >
+                <option value="">Select Company</option>
+                {companies.map((company: any) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label>Phone</Label>
+              <Input
+                value={vendorForm.phone}
+                onChange={(e) => setVendorForm({ ...vendorForm, phone: e.target.value })}
+                placeholder="+1234567890"
+              />
+            </div>
+            <div>
+              <Label>Cost Per Order (₹)</Label>
+              <Input
+                type="number"
+                value={vendorForm.cost_per_order}
+                onChange={(e) => setVendorForm({ ...vendorForm, cost_per_order: parseFloat(e.target.value) || 0 })}
+                placeholder="0.00"
+              />
+            </div>
+            <Button
+              onClick={() => createVendor.mutate(vendorForm)}
+              disabled={createVendor.isPending || !vendorForm.name || !vendorForm.email || !vendorForm.password || !vendorForm.company_id}
+              className="w-full"
+            >
+              Create Vendor with Login Access
             </Button>
           </div>
         </DialogContent>
