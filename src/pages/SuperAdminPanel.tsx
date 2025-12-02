@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdvancedDataTable } from "@/components/AdvancedDataTable";
 import { toast } from "sonner";
-import { Building2, UserPlus, Settings, Users } from "lucide-react";
+import { Building2, UserPlus, Settings, Users, Download, BarChart3, Activity, Shield, TrendingUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,7 +18,10 @@ export const SuperAdminPanel = () => {
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
   const [showModuleDialog, setShowModuleDialog] = useState(false);
   const [showVendorDialog, setShowVendorDialog] = useState(false);
+  const [showCompanyAdminDialog, setShowCompanyAdminDialog] = useState(false);
+  const [showActivityDialog, setShowActivityDialog] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [companyForm, setCompanyForm] = useState({ name: '', email: '', phone: '' });
   const [vendorForm, setVendorForm] = useState({ 
     name: '', 
@@ -27,6 +30,12 @@ export const SuperAdminPanel = () => {
     password: '',
     company_id: '',
     cost_per_order: 0 
+  });
+  const [companyAdminForm, setCompanyAdminForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    company_id: ''
   });
 
   // Fetch companies
@@ -54,6 +63,26 @@ export const SuperAdminPanel = () => {
       
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Fetch statistics
+  const { data: stats } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: async () => {
+      const [companiesCount, vendorsCount, activeCompanies, activeVendors] = await Promise.all([
+        supabase.from('companies').select('id', { count: 'exact', head: true }),
+        supabase.from('vendors').select('id', { count: 'exact', head: true }),
+        supabase.from('companies').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('vendors').select('id', { count: 'exact', head: true }).eq('is_active', true),
+      ]);
+      
+      return {
+        totalCompanies: companiesCount.count || 0,
+        totalVendors: vendorsCount.count || 0,
+        activeCompanies: activeCompanies.count || 0,
+        activeVendors: activeVendors.count || 0,
+      };
     },
   });
 
@@ -142,6 +171,52 @@ export const SuperAdminPanel = () => {
     },
   });
 
+  // Create company admin mutation
+  const createCompanyAdmin = useMutation({
+    mutationFn: async (adminData: typeof companyAdminForm) => {
+      const { data, error } = await supabase.functions.invoke('create-vendor-user', {
+        body: { 
+          vendorData: {
+            name: adminData.name,
+            email: adminData.email,
+            company_id: adminData.company_id,
+            role: 'company'
+          },
+          password: adminData.password 
+        }
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      toast.success('Company admin created successfully');
+      setShowCompanyAdminDialog(false);
+      setCompanyAdminForm({ name: '', email: '', password: '', company_id: '' });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to create admin: ${error.message}`);
+    },
+  });
+
+  // Bulk toggle status
+  const bulkToggleStatus = useMutation({
+    mutationFn: async ({ ids, table, newStatus }: { ids: string[]; table: 'companies' | 'vendors'; newStatus: boolean }) => {
+      const { error } = await supabase
+        .from(table)
+        .update({ is_active: newStatus })
+        .in('id', ids);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [variables.table === 'companies' ? 'companies' : 'vendors'] });
+      toast.success(`${variables.ids.length} ${variables.table} updated`);
+      setSelectedRows([]);
+    },
+  });
+
   // Toggle module permission
   const toggleModulePermission = useMutation({
     mutationFn: async ({ moduleId, permission }: { moduleId: string; permission: keyof typeof permissions }) => {
@@ -170,10 +245,51 @@ export const SuperAdminPanel = () => {
     },
   });
 
+  // Export to CSV
+  const exportToCSV = (data: any[], filename: string) => {
+    if (!data.length) {
+      toast.error('No data to export');
+      return;
+    }
+    
+    const headers = Object.keys(data[0]).filter(key => typeof data[0][key] !== 'object');
+    const csv = [
+      headers.join(','),
+      ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    toast.success('Data exported successfully');
+  };
+
   const companyColumns = [
+    { 
+      header: 'Select', 
+      accessor: 'id',
+      cell: (row: any) => (
+        <Checkbox
+          checked={selectedRows.includes(row.id)}
+          onCheckedChange={(checked) => {
+            setSelectedRows(prev => 
+              checked ? [...prev, row.id] : prev.filter(id => id !== row.id)
+            );
+          }}
+        />
+      ),
+    },
     { header: 'Company Name', accessor: 'name' },
     { header: 'Email', accessor: 'email' },
-    { header: 'Phone', accessor: 'phone' },
+    { header: 'Phone', accessor: 'phone', cell: (v: string) => v || 'N/A' },
+    { 
+      header: 'Created', 
+      accessor: 'created_at',
+      cell: (v: string) => new Date(v).toLocaleDateString()
+    },
     {
       header: 'Status',
       accessor: 'is_active',
@@ -187,27 +303,59 @@ export const SuperAdminPanel = () => {
       header: 'Actions',
       accessor: 'id',
       cell: (row: any) => (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setSelectedCompany(row);
-            setShowModuleDialog(true);
-          }}
-        >
-          <Settings className="h-4 w-4 mr-1" />
-          Manage Modules
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSelectedCompany(row);
+              setShowModuleDialog(true);
+            }}
+          >
+            <Settings className="h-4 w-4 mr-1" />
+            Modules
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setCompanyAdminForm({ ...companyAdminForm, company_id: row.id });
+              setShowCompanyAdminDialog(true);
+            }}
+          >
+            <Shield className="h-4 w-4 mr-1" />
+            Add Admin
+          </Button>
+        </div>
       ),
     },
   ];
 
   const vendorColumns = [
+    { 
+      header: 'Select', 
+      accessor: 'id',
+      cell: (row: any) => (
+        <Checkbox
+          checked={selectedRows.includes(row.id)}
+          onCheckedChange={(checked) => {
+            setSelectedRows(prev => 
+              checked ? [...prev, row.id] : prev.filter(id => id !== row.id)
+            );
+          }}
+        />
+      ),
+    },
     { header: 'Vendor Name', accessor: 'name' },
     { header: 'Email', accessor: 'email' },
     { header: 'Phone', accessor: 'phone', cell: (v: string) => v || 'N/A' },
     { header: 'Company', accessor: 'companies', cell: (v: any) => v?.name || 'N/A' },
     { header: 'Cost/Order', accessor: 'cost_per_order', cell: (v: number) => `₹${v?.toFixed(2) || '0.00'}` },
+    { 
+      header: 'Created', 
+      accessor: 'created_at',
+      cell: (v: string) => new Date(v).toLocaleDateString()
+    },
     {
       header: 'Status',
       accessor: 'is_active',
@@ -225,6 +373,66 @@ export const SuperAdminPanel = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Super Admin Panel</h1>
+        <Button variant="outline" onClick={() => setShowActivityDialog(true)}>
+          <Activity className="h-4 w-4 mr-2" />
+          View Activity
+        </Button>
+      </div>
+
+      {/* Statistics Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="transition-all hover:shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+            <Building2 className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalCompanies || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.activeCompanies || 0} active
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="transition-all hover:shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
+            <Users className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalVendors || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.activeVendors || 0} active
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="transition-all hover:shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Company Active Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stats?.totalCompanies ? Math.round((stats.activeCompanies / stats.totalCompanies) * 100) : 0}%
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Active companies
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="transition-all hover:shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vendor Active Rate</CardTitle>
+            <BarChart3 className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stats?.totalVendors ? Math.round((stats.activeVendors / stats.totalVendors) * 100) : 0}%
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Active vendors
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="companies">
@@ -243,10 +451,38 @@ export const SuperAdminPanel = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Companies Management</CardTitle>
-              <Button onClick={() => setShowCompanyDialog(true)}>
-                <Building2 className="h-4 w-4 mr-2" />
-                Add Company
-              </Button>
+              <div className="flex gap-2">
+                {selectedRows.length > 0 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => bulkToggleStatus.mutate({ ids: selectedRows, table: 'companies', newStatus: true })}
+                    >
+                      Activate ({selectedRows.length})
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => bulkToggleStatus.mutate({ ids: selectedRows, table: 'companies', newStatus: false })}
+                    >
+                      Deactivate ({selectedRows.length})
+                    </Button>
+                  </>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToCSV(companies, 'companies')}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+                <Button onClick={() => setShowCompanyDialog(true)}>
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Add Company
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <AdvancedDataTable
@@ -263,10 +499,38 @@ export const SuperAdminPanel = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Vendors Management</CardTitle>
-              <Button onClick={() => setShowVendorDialog(true)}>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add Vendor
-              </Button>
+              <div className="flex gap-2">
+                {selectedRows.length > 0 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => bulkToggleStatus.mutate({ ids: selectedRows, table: 'vendors', newStatus: true })}
+                    >
+                      Activate ({selectedRows.length})
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => bulkToggleStatus.mutate({ ids: selectedRows, table: 'vendors', newStatus: false })}
+                    >
+                      Deactivate ({selectedRows.length})
+                    </Button>
+                  </>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToCSV(vendors, 'vendors')}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+                <Button onClick={() => setShowVendorDialog(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Vendor
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <AdvancedDataTable
@@ -398,6 +662,79 @@ export const SuperAdminPanel = () => {
             >
               Create Vendor with Login Access
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Company Admin Dialog */}
+      <Dialog open={showCompanyAdminDialog} onOpenChange={setShowCompanyAdminDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Company Admin User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Admin Name *</Label>
+              <Input
+                value={companyAdminForm.name}
+                onChange={(e) => setCompanyAdminForm({ ...companyAdminForm, name: e.target.value })}
+                placeholder="Enter admin name"
+              />
+            </div>
+            <div>
+              <Label>Email * (Login Username)</Label>
+              <Input
+                type="email"
+                value={companyAdminForm.email}
+                onChange={(e) => setCompanyAdminForm({ ...companyAdminForm, email: e.target.value })}
+                placeholder="admin@company.com"
+              />
+            </div>
+            <div>
+              <Label>Password *</Label>
+              <Input
+                type="password"
+                value={companyAdminForm.password}
+                onChange={(e) => setCompanyAdminForm({ ...companyAdminForm, password: e.target.value })}
+                placeholder="Min 6 characters"
+              />
+            </div>
+            <div>
+              <Label>Company *</Label>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={companyAdminForm.company_id}
+                onChange={(e) => setCompanyAdminForm({ ...companyAdminForm, company_id: e.target.value })}
+              >
+                <option value="">Select Company</option>
+                {companies.map((company: any) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button
+              onClick={() => createCompanyAdmin.mutate(companyAdminForm)}
+              disabled={createCompanyAdmin.isPending || !companyAdminForm.name || !companyAdminForm.email || !companyAdminForm.password || !companyAdminForm.company_id}
+              className="w-full"
+            >
+              Create Company Admin
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Activity Dialog */}
+      <Dialog open={showActivityDialog} onOpenChange={setShowActivityDialog}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Recent Activity</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Activity logging coming soon. This will show recent changes made across companies and vendors.
+            </div>
           </div>
         </DialogContent>
       </Dialog>
